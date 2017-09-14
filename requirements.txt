@@ -1,0 +1,4 @@
+opencv
+pylibfreenect2
+numpy 
+sanic

@@ -1,0 +1,3 @@
+C'est la nuit. Des gens passent, se croisent, se rencontrent, s'arrêtent. Dans leur sillage, des mots surgissent. Peu à peu, c'est tout un texte qui se déploie sous leurs pieds et commence à danser avec eux. L'interligne habituel entre les phrases, bien sage et bien rangé, se met soudain à suivre les mouvements de leurs vies. Il bifurque, s'agrandit, dessine des boucles et tisse de nouveaux motifs.
+
+Interlignes vous invite à venir lire en marchant, à moins ce que soit réécrire en dansant, un texte de Georges Perec, Tentative d'épuisement d'un lieu parisien, ainsi libéré de sa page et glissant joyeusement sur les pavés, guidé par le souffle des déplacements de vos corps.
