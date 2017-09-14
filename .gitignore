@@ -3,6 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+.vscode
+visualisation/node_modules/*
+
+
 # C extensions
 *.so
 
@@ -99,3 +103,4 @@ ENV/
 
 # mypy
 .mypy_cache/
+
