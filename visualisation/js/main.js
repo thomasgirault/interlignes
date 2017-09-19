@@ -14,6 +14,8 @@
 
 var ws = new WebSocket("ws://127.0.0.1:8888/");
 
+var tracker = new WebSocket("ws://127.0.0.1:8888/tracker");
+
 // mapping
 // Wrapping angular/typescript : https://codepen.io/osublake/pen/gLGYxx
 // 3D CSS Quad wrapping
@@ -45,8 +47,14 @@ gui.add(ligne, 'segLength', 15, 100).name( 'Seg len' );
 // gui.addColor(texter, 'bgColor').name( 'Background Color' ).onChange( function(value) { texter.setBackground( value ) } );
 //gui.add(ligne, 'clear').name( 'Clear' );
 //gui.add(ligne, 'save').name( 'Save' );
+var tracked_point = [0,0];
 
-
+tracker.onmessage = function (event) {
+  if (typeof event.data === 'string' || event.data instanceof String) {
+    console.log(event.data)
+    tracked_point = JSON.parse(event.data)[0];
+  }
+};
 
 ws.onmessage = function (event) {
   if (typeof event.data === 'string' || event.data instanceof String) {
@@ -90,7 +98,11 @@ function setup() {
 
 function draw() {          
   background(0);
-  ligne.draw(mouseX, mouseY);
+  if (tracked_point != [0,0]){
+    ligne.draw((1920 / 512) * tracked_point[0] , (1080 / 424) * tracked_point[1]);
+  } else {
+    ligne.draw(mouseX, mouseY);
+  }
   // ligne2.draw(1920 - mouseX, mouseY);
   // ligne3.draw(1920 - mouseX, 1080 - mouseY);
   // ligne4.draw(mouseX, 1080 - mouseY);
