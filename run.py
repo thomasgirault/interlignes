@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import sys
+import asyncio
 from signal import signal, SIGINT
 
 
@@ -17,10 +18,11 @@ from sanic.response import text, json, stream
 from sanic.config import Config
 from sanic.exceptions import RequestTimeout
 
-# Config.REQUEST_TIMEOUT = 1000
+Config.REQUEST_TIMEOUT = 100000
+Config.KEEP_ALIVE = False
 
-import asyncio
 
+from MultiObjectTracker import MultiObjectTracker
 
 def create_corpus():
     lines = []
@@ -31,33 +33,28 @@ def create_corpus():
                 lines.append(l)
     return lines
 
-app = Sanic(__name__)
-CORS(app)
-
 corpus = create_corpus()
 
+mot = MultiObjectTracker()
 
 MAX_DIST = 18750. / 255.
-depth_range = {"min_depth":0, "max_depth":255, "theta":127, "save":0, "MAX_DIST":MAX_DIST}
+depth_range = {"min_depth":0, "max_depth":255, "theta":0, "save":0, "MAX_DIST":MAX_DIST}
 
-w,h = 512, 424
-# out = cv2.VideoWriter('/tmp/output.avi', -1, 20.0, (512, 424))
-# codec = -1
-# font = cv2.FONT_HERSHEY_SIMPLEX
+# Doit être stocké comme un JSON à l'exterieur de l'application
+
+
+font = cv2.FONT_HERSHEY_SIMPLEX
 # textCol = (0,255,0)
 fps = 25
+w,h = 512, 424
 filename = '/tmp/depth.avi'
 codec = cv2.VideoWriter_fourcc(*'MJPG')
-# codec = cv2.VideoWriter_fourcc(*'XVID')
+# out = cv2.VideoWriter('/tmp/output.avi', -1, 20.0, (512, 424))
 video_out = cv2.VideoWriter(filename, codec, fps, (w,h))
 
-# detector = create_detector()
 pipeline = OpenCLKdePacketPipeline(0)
 
 print("Packet pipeline:", type(pipeline).__name__)
-
-
-# MAX_DIST = 18750. / 255.
 
 
 
@@ -74,18 +71,17 @@ if num_devices == 0:
 serial = fn.getDeviceSerialNumber(0)
 device = fn.openDevice(serial, pipeline=pipeline)
 
-listener = SyncMultiFrameListener(
-    FrameType.Color | FrameType.Ir | FrameType.Depth)
+listener = SyncMultiFrameListener(FrameType.Depth) #  | FrameType.Color | FrameType.Ir)
 
 # Register listeners
-device.setColorFrameListener(listener)
+# device.setColorFrameListener(listener)
 device.setIrAndDepthFrameListener(listener)
 
 device.start()
 
 # NOTE: must be called after device.start()
-registration = Registration(device.getIrCameraParams(),
-                            device.getColorCameraParams())
+# registration = Registration(device.getIrCameraParams(),
+#                             device.getColorCameraParams())
 
 undistorted = Frame(512, 424, 4)
 registered = Frame(512, 424, 4)
@@ -99,11 +95,8 @@ bigdepth = Frame(1920, 1082, 4) if need_bigdepth else None
 color_depth_map = np.zeros((424, 512),  np.int32).ravel() \
     if need_color_depth_map else None
 
-font = cv2.FONT_HERSHEY_SIMPLEX
 
-
-
-def blob_detection(depth_arr):
+def blob_detection(depth):
     # http://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_imgproc/py_contours/py_contour_features/py_contour_features.html
     # https://stackoverflow.com/questions/32414559/opencv-contour-minimum-dimension-location-in-python
 
@@ -112,27 +105,34 @@ def blob_detection(depth_arr):
     # frame = cv2.bitwise_not(frame)
     # frame = cv2.adaptiveThreshold(depth_arr,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,11,2)
 
-    ret,frame = cv2.threshold(depth_arr, depth_range["min_depth"], 255, cv2.THRESH_TOZERO)
+    ret,frame = cv2.threshold(depth, depth_range["min_depth"], 255, cv2.THRESH_TOZERO)
     ret,frame = cv2.threshold(frame, depth_range["max_depth"],255,cv2.THRESH_TOZERO_INV)
     ret,frame = cv2.threshold(frame, depth_range["theta"],255,0)
 
+    out = frame.copy()
     im2, contours, hierarchy = cv2.findContours(frame,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
-    cv2.drawContours(frame, contours, -1, (0,255,0), 3)
+    # cv2.drawContours(depth, contours, -1, (255,255,0), 255)
 
-    displayed_frame = depth_arr.copy()
+    points = []
+    rects = []
+
     for i, cnt in enumerate(contours):
         # compute the bounding box for the contour
         (x, y, w, h) = cv2.boundingRect(cnt)
         # reject contours outside size range
-        if w > 500 or w < 100 or h > 500 or h < 100 :
+        if w > 500 or w < 30 or h > 500 or h < 30 :
             continue
         # # make sure the box is inside the frame
-        if x <= 0 or y <= 0 or x+w >= (512 -1) or y+h >= (424 -1):
-            continue
+        # if x <= 0 or y <= 0 or x+w >= (512 -1) or y+h >= (424 -1):
+        #     continue
         center = ( int((x + w)/2), int((y + h) / 2) )
-        cv2.putText(displayed_frame, f'{i}', center, font, 1, (0,0,255),1,cv2.LINE_AA)
-        cv2.rectangle(displayed_frame,(x,y),(x+w,y+h),(255,0,0),2)
-    return displayed_frame
+        points.append(center)
+        rects.append((x, y, w, h))
+        cv2.putText(out, f'{i}', center, font, 1, (0,0,255),1,cv2.LINE_AA)
+        cv2.rectangle(out,(x,y),(x+w,y+h),(255,0,0),2)
+    mot.update(np.array(points), rects)
+    return out
+
 
 def video_export(depth):
     # garder en mémoire le précédent état
@@ -148,50 +148,65 @@ def video_export(depth):
 displayed_frame = None
 async def kinect_loop():
     global displayed_frame
+
+    # fgmask = None
+    # for t in range(100):
+    #     frames = listener.waitForNewFrame()
+    #     depth = frames["depth"]
+    #     fgmask = bg_substractor.apply(depth_arr)
+    #     listener.release(frames)
+    #     await asyncio.sleep(0.01)
+
+    bg_ref = cv2.imread("/home/thomas/dev/Interlignes/interlignes/bg.jpg")
+    fg_img = None
+    t = 0
+    bg_substractor = cv2.createBackgroundSubtractorMOG2()
+
     while True:
         frames = listener.waitForNewFrame()
-
-        color = frames["color"]
         depth = frames["depth"]
-        ir = frames["ir"]
 
-        registration.apply(color, depth, undistorted, registered,
-                        bigdepth=bigdepth,
-                        color_depth_map=color_depth_map
-                        )
-
-        color_img = registered.asarray(np.uint8)
         depth_arr = np.array((depth.asarray(np.float32))  / depth_range['MAX_DIST'], dtype=np.uint8)
-        video_export(depth)
-        displayed_frame = blob_detection(depth_arr)
-        listener.release(frames)
-        # pourquoi ?
-        # key = cv2.waitKey(delay=1)
-        await asyncio.sleep(0.01)
+        depth_arr = cv2.blur(depth_arr,(5,5))
+        depth_arr=cv2.flip(depth_arr,1)
 
-# def get_frame(frame):
-#     ret, jpeg = cv2.imencode('.jpg', frame)
-#     return jpeg.tobytes()
+        if t < 200:
+            # c'est possible de l'initialiser avec 100x l'image sauvegardée précédement
+            mask = bg_substractor.apply(bg_ref, learningRate=0.5)        # depth_arr
+        elif t == 200:
+            cv2.imwrite("/tmp/fg.jpg", depth_arr)
+
+        else:
+            mask = bg_substractor.apply(depth_arr, learningRate=0)       
+            blobs = blob_detection(mask)        
+            displayed_frame = np.hstack((mask, blobs)) # , mask
+
+        listener.release(frames)
+        await asyncio.sleep(0.01)
+        t += 1
+
 
 async def frame_streamer(response):
     while True:
-        # f = get_frame(displayed_frame)
         ret, jpeg = cv2.imencode('.jpg', displayed_frame)
         f = jpeg.tobytes()
-        response.write(b'--frame\r\n'
-            b'Content-Type: image/jpeg\r\n\r\n' + bytearray(f) + b'\r\n')
+        response.write(b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + bytearray(f) + b'\r\n')
         await asyncio.sleep(0.01)
+
+
+app = Sanic(__name__)
+CORS(app)
 
 @app.route('/video_feed')
 def video_feed(request):
     """Video streaming route. Put this in the src attribute of an img tag."""
-    return stream(frame_streamer, content_type='multipart/x-mixed-replace; boundary=frame')
-#    return stream(kinect_loop, content_type='multipart/x-mixed-replace; boundary=frame')
+    return stream(frame_streamer, content_type='multipart/x-mixed-replace; boundary=frame') # , keep_alive = True)
+    
 
 @app.route("/param/<name>/<value>", methods=['POST', 'OPTIONS'])
 def post_json(request, name, value):
     depth_range[name] = int(value)
-    return json({ "received": True, "name":name, "value": value })
+    return json({ "received": True, "name":name, "value": value})
 
 @app.websocket('/')
 async def feed(request, ws):
@@ -203,9 +218,20 @@ async def feed(request, ws):
 
 @app.websocket('/tracker')
 async def feed(request, ws):
+    # http://damienclarke.me/code/posts/writing-a-better-noise-reducing-analogread
+    # exponential moving avg
+    alpha = 0.5
+    previous = np.array([1.0,1.0])
+    convert = np.array([1920./512., 1080 / 424.])
     while True:
-        if new_coord:
-            await ws.send(str(line))
+        norm = np.linalg.norm(previous - mot.tracked)
+        # print(norm)
+        if norm > 1:
+            previous = mot.tracked
+            # not np.allclose(previous, mot.tracked):
+            # previous = (mot.tracked - previous) * alpha
+            res = (previous * convert).astype(int)
+            await ws.send(str(res.tolist()))
         await asyncio.sleep(0.01)
 
 app.static('/visualisation', './visualisation')
