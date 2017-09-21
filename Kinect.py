@@ -11,6 +11,9 @@ from pylibfreenect2 import OpenCLKdePacketPipeline
 logger = createConsoleLogger(LoggerLevel.Debug)
 setGlobalLogger(logger)
 
+# CUDA KDE : https://github.com/antlai/pylibfreenect2
+# Improve detection : https://stackoverflow.com/questions/38094594/detect-approximately-objects-on-depth-map
+
 class Kinect:
     def __init__(self):
         self.pipeline = OpenCLKdePacketPipeline(0)
@@ -64,15 +67,15 @@ class Kinect:
         color_img = self.registered.asarray(np.uint8)
         depth_arr = np.array((depth.asarray(np.float32))  / depth_range['MAX_DIST'], dtype=np.uint8)
 
-        video_export(depth)
+        self.video_export(depth)
 
-        displayed_frame = blob_detection(depth_arr)
-        f = get_frame(displayed_frame)
+        displayed_frame = self.blob_detection(depth_arr)
+        f = self.get_frame(displayed_frame)
 
-        response.write(b'--frame\r\n'
-            b'Content-Type: image/jpeg\r\n\r\n' + bytearray(f) + b'\r\n')
+        # response.write(b'--frame\r\n'
+        #     b'Content-Type: image/jpeg\r\n\r\n' + bytearray(f) + b'\r\n')
         
-        listener.release(frames)
+        self.listener.release(frames)
 
 
     def rotate(self, x, y, z):
@@ -93,3 +96,5 @@ async def kinect_loop(response):
     kinect = Kinect()
     while True:
         kinect.update()
+
+
