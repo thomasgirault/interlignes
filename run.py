@@ -1,8 +1,11 @@
 import numpy as np
 import cv2
 import sys
+import traceback
+
 import asyncio
 from signal import signal, SIGINT
+import json as js
 
 from pylibfreenect2 import Freenect2, SyncMultiFrameListener
 from pylibfreenect2 import FrameType, Registration, Frame
@@ -27,26 +30,26 @@ from MultiObjectTracker import MultiObjectTracker
 mot = MultiObjectTracker()
 
 MAX_DIST = 18750. / 255.
-VARS = {"min_depth":0, 
-        "max_depth":255, 
-        "theta":0, 
-        "save":0, 
-        "MAX_DIST":MAX_DIST,
-        "min_blob_size":30, 
-        "max_blob_size":500,
-        "learnBG":0,
-        "min_norm":1,
-        "extra_spaces":5}
+VARS = {"min_depth": 0,
+        "max_depth": 255,
+        "theta": 0,
+        "save": 0,
+        "MAX_DIST": MAX_DIST,
+        "min_blob_size": 30,
+        "max_blob_size": 500,
+        "learnBG": 0,
+        "min_norm": 1,
+        "extra_spaces": 5}
 
 # TODO : Doit être stocké comme un JSON à l'exterieur de l'application en lien avec l'appli JS
 
 
 font = cv2.FONT_HERSHEY_SIMPLEX
 fps = 25
-w,h = 512, 424
+w, h = 512, 424
 filename = '/tmp/depth.avi'
 codec = cv2.VideoWriter_fourcc(*'MJPG')
-video_out = cv2.VideoWriter(filename, codec, fps, (w,h))
+video_out = cv2.VideoWriter(filename, codec, fps, (w, h))
 
 pipeline = OpenCLKdePacketPipeline(0)
 displayed_frame = None
@@ -67,7 +70,8 @@ if num_devices == 0:
 serial = fn.getDeviceSerialNumber(0)
 device = fn.openDevice(serial, pipeline=pipeline)
 
-listener = SyncMultiFrameListener(FrameType.Depth) #  | FrameType.Color | FrameType.Ir)
+# | FrameType.Color | FrameType.Ir)
+listener = SyncMultiFrameListener(FrameType.Depth)
 
 # Register listeners
 # device.setColorFrameListener(listener)
@@ -82,21 +86,33 @@ def video_export(depth):
         print("saving video")
         gray = depth.asarray(np.uint8)
         # v_img = cv2.cvtColor(depth_arr,depth_arr, cv2.CV_BGR2GRAY)
-        # gray = cv2.cvtColor(depth_arr, cv2.COLOR_BGR2GRAY) 
+        # gray = cv2.cvtColor(depth_arr, cv2.COLOR_BGR2GRAY)
         video_out.write(gray)
     elif VARS['save'] == 2:
         video_out.release()
 
 
+tracked_points = {}
+
+
 def blob_detection(depth):
+    global tracked_points
+
     # http://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_imgproc/py_contours/py_contour_features/py_contour_features.html
     # https://stackoverflow.com/questions/32414559/opencv-contour-minimum-dimension-location-in-python
-    ret,frame = cv2.threshold(depth, VARS["min_depth"], 255, cv2.THRESH_TOZERO)
-    ret,frame = cv2.threshold(frame, VARS["max_depth"],255,cv2.THRESH_TOZERO_INV)
-    ret,frame = cv2.threshold(frame, VARS["theta"],255,0)
+    ret, frame = cv2.threshold(
+        depth, VARS["min_depth"], 255, cv2.THRESH_TOZERO)
+    ret, frame = cv2.threshold(
+        frame, VARS["max_depth"], 255, cv2.THRESH_TOZERO_INV)
+    ret, frame = cv2.threshold(frame, VARS["theta"], 255, 0)
+
+    # remove noise, highlighting the car
+    # cv.Erode(car, car, iterations=2)
+    # cv.Dilate(car, car, iterations=5)
 
     out = frame.copy()
-    im2, contours, hierarchy = cv2.findContours(frame,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+    im2, contours, hierarchy = cv2.findContours(
+        frame, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     # cv2.drawContours(depth, contours, -1, (255,255,0), 255)
 
     points = []
@@ -106,17 +122,21 @@ def blob_detection(depth):
         # compute the bounding box for the contour
         (x, y, w, h) = cv2.boundingRect(cnt)
         # reject contours outside size range
-        if w > VARS["max_blob_size"] or w < VARS["min_blob_size"] or h > VARS["max_blob_size"] or h < VARS["min_blob_size"] :
+        if w > VARS["max_blob_size"] or w < VARS["min_blob_size"] or h > VARS["max_blob_size"] or h < VARS["min_blob_size"]:
             continue
         # # make sure the box is inside the frame
         # if x <= 0 or y <= 0 or x+w >= (512 -1) or y+h >= (424 -1):
         #     continue
-        center = ( int((x + w)/2), int((y + h) / 2) )
+        center = (int((x + w) / 2), int((y + h) / 2))
         points.append(center)
         rects.append((x, y, w, h))
-        cv2.putText(out, f'{i}', center, font, 1, (0,0,255),1,cv2.LINE_AA)
-        cv2.rectangle(out,(x,y),(x+w,y+h),(255,0,0),2)
-    mot.update(np.array(points), rects)
+        cv2.putText(out, f'{i}', center, font, 1, (0, 0, 255), 1, cv2.LINE_AA)
+        cv2.rectangle(out, (x, y), (x + w, y + h), (255, 0, 0), 2)
+    try:
+        tracked_points = dict(mot.update(np.array(points), rects))
+    except Exception as e:
+        print(e)
+        print(traceback.format_exc())
     return out
 
 
@@ -127,18 +147,20 @@ async def kinect_loop():
     bg_substractor = cv2.createBackgroundSubtractorMOG2(history=1)
     mask = bg_substractor.apply(bg_mask, learningRate=1)
     # initialisation avec 100x l'image sauvegardée précédement
-    
+
     while True:
         frames = listener.waitForNewFrame()
         depth = frames["depth"]
 
-        depth_arr = np.array((depth.asarray(np.float32))  / VARS['MAX_DIST'], dtype=np.uint8)
-        depth_arr = cv2.blur(depth_arr,(5,5))
-        depth_arr = cv2.flip(depth_arr,1)
+        depth_arr = np.array((depth.asarray(np.float32)) /
+                             VARS['MAX_DIST'], dtype=np.uint8)
+        depth_arr = cv2.blur(depth_arr, (7, 7))
+        depth_arr = cv2.flip(depth_arr, 1)
 
         # acquisition et sauvegarde d'un masque
         mask = bg_substractor.apply(depth_arr, learningRate=VARS["learnBG"])
-        blobs = blob_detection(mask)        
+
+        blobs = blob_detection(mask)
         displayed_frame = np.hstack((mask, blobs))
 
         if VARS["learnBG"] == 1:
@@ -147,29 +169,16 @@ async def kinect_loop():
 
         listener.release(frames)
         await asyncio.sleep(0.01)
-    
+
 
 async def frame_streamer(response):
     while True:
         ret, jpeg = cv2.imencode('.jpg', displayed_frame)
         f = jpeg.tobytes()
-        response.write(b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + bytearray(f) + b'\r\n')
+        response.write(
+            b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + bytearray(f) + b'\r\n')
         await asyncio.sleep(0.01)
 
-
-
-app = Sanic(__name__)
-CORS(app)
-
-@app.route('/video_feed')
-def video_feed(request):
-    """Video streaming route. Put this in the src attribute of an img tag."""
-    return stream(frame_streamer, content_type='multipart/x-mixed-replace; boundary=frame')
-
-@app.route("/param/<name>/<value>", methods=['POST', 'OPTIONS'])
-def post_json(request, name, value):
-    VARS[name] = int(value)
-    return json({ "received": True, "name":name, "value": value})
 
 def create_corpus():
     lines = []
@@ -184,13 +193,30 @@ def create_corpus():
 corpus = create_corpus()
 current_paragraph = 30
 
+app = Sanic(__name__)
+CORS(app)
+
+
+@app.route('/video_feed')
+def video_feed(request):
+    """Video streaming route. Put this in the src attribute of an img tag."""
+    return stream(frame_streamer, content_type='multipart/x-mixed-replace; boundary=frame')
+
+
+@app.route("/param/<name>/<value>", methods=['POST', 'OPTIONS'])
+def post_json(request, name, value):
+    VARS[name] = int(value)
+    return json({"received": True, "name": name, "value": value})
+
+
 @app.route("/paragraphe/<walker_id>", methods=['POST', 'OPTIONS'])
 def paragraphe(request, walker_id):
     global current_paragraph
-    texte = corpus[current_paragraph] + VARS['extra_spaces']*" "
+    texte = corpus[current_paragraph] + VARS['extra_spaces'] * " "
     current_paragraph += 1
     current_paragraph %= len(corpus)
-    return json({ "received": True, "walker_id":walker_id, "texte": texte})
+    return json({"received": True, "walker_id": walker_id, "texte": texte})
+
 
 # TODO : fusionner corpus et tracker
 @app.websocket('/tracker')
@@ -198,19 +224,21 @@ async def tracker(request, ws):
     # http://damienclarke.me/code/posts/writing-a-better-noise-reducing-analogread
     # exponential moving avg
     alpha = 0.5
-    previous = np.array([0.0,0.0])
-    convert = np.array([1920./512., 1080 / 424.])
+    previous = np.array([0.0, 0.0])
+    convert = np.array([1920. / 512., 1080 / 424.])
     while True:
-        norm = np.linalg.norm(previous - mot.tracked)
-        # faire une serie de normes sur un vecteur de coordonnée ?
-        if norm > VARS["min_norm"]:
-            previous = mot.tracked
-            # not np.allclose(previous, mot.tracked):
-            # previous = (mot.tracked - previous) * alpha
-            res = (previous * convert).astype(int)
-            await ws.send(str(res.tolist()))
+        if tracked_points != {}:
+            await ws.send(js.dumps(tracked_points))
         await asyncio.sleep(0.01)
 
+        # norm = np.linalg.norm(previous - mot.tracked)
+        # faire une serie de normes sur un vecteur de coordonnée ?
+        # if norm > VARS["min_norm"]:
+        #     previous = mot.tracked
+        #     # not np.allclose(previous, mot.tracked):
+        #     # previous = (mot.tracked - previous) * alpha
+        #     res = (previous * convert).astype(int)
+        #     await ws.send(str(res.tolist()))
 app.static('/visualisation', './visualisation')
 
 
