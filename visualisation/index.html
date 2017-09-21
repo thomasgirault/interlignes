@@ -1,14 +1,19 @@
 <html>
     <head>
       <title>Kinect Streaming</title>
-      <script type="text/javascript" src="./node_modules/jquery/dist/jquery.min.js"></script>      
-      <script type="text/javascript" src="./node_modules/dat.gui/build/dat.gui.js"></script>
-      
+      <script type="text/javascript" src="./node_modules/jquery/dist/jquery.min.js"></script>
+      <script type="text/javascript" src="./node_modules/dat.gui/build/dat.gui.min.js"></script>
+      <script type="text/javascript" src="./js/gui.js" charset="utf-8"></script>
+      <style>
+      /* img{
+      transform: scaleX(-1);
+      } */
+      </style>
       
     </head>
     <body>
-      <div id='main'></div>      
-      <img src="http://localhost:8888/video_feed" width="1000">
-      <script src="./js/gui.js" charset="utf-8"></script>
+      <div id='main'>
+        <img src="http://localhost:8888/video_feed">
+      </div>
     </body>
   </html>
