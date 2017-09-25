@@ -16,7 +16,7 @@ function Texter(id) {
   this.textIndex = 0;
   this.textColor = "#ffffff";
   this.bgColor = "#000000";
-  this.minFontSize = 8;
+  this.minFontSize = 30;
   this.maxFontSize = 300;
   this.angleDistortion = 0.00;
   this.tracked_point = [0, 0];
