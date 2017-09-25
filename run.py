@@ -2,19 +2,14 @@ import numpy as np
 import cv2
 import sys
 from datetime import datetime
-
 import traceback
 
 import asyncio
 from signal import signal, SIGINT
 import json as js
 
-from pylibfreenect2 import Freenect2, SyncMultiFrameListener
-from pylibfreenect2 import FrameType, Registration, Frame
-from pylibfreenect2 import createConsoleLogger, setGlobalLogger
-from pylibfreenect2 import LoggerLevel
-from pylibfreenect2 import OpenCLKdePacketPipeline
-
+from Kinect import Kinect
+from sort import Sort
 
 from sanic import Sanic, response
 from sanic_cors import CORS, cross_origin
@@ -25,13 +20,9 @@ from sanic.exceptions import RequestTimeout
 Config.REQUEST_TIMEOUT = 100000
 Config.KEEP_ALIVE = False
 
+# from MultiObjectTracker import MultiObjectTracker
+# mot = MultiObjectTracker()
 
-from MultiObjectTracker import MultiObjectTracker
-from sort import Sort
-
-
-mot = MultiObjectTracker()
-sort_tracker = Sort(max_age=5, min_hits=10)
 
 
 MAX_DIST = 18750. / 255.
@@ -53,64 +44,45 @@ VARS = {"min_depth": 0,
 
 
 font = cv2.FONT_HERSHEY_SIMPLEX
-
 video_out = None 
-#cv2.VideoWriter(filename, codec, fps, (w, h))
-
-pipeline = OpenCLKdePacketPipeline(0)
 displayed_frame = None
+tracked_points = {}
+kinect = Kinect()
+sort_tracker = Sort(max_age=5, min_hits=10)
 
-print("Packet pipeline:", type(pipeline).__name__)
-
-
-# Create and set logger
-logger = createConsoleLogger(LoggerLevel.Debug)
-setGlobalLogger(logger)
-
-fn = Freenect2()
-num_devices = fn.enumerateDevices()
-if num_devices == 0:
-    print("No device connected!")
-    sys.exit(1)
-
-serial = fn.getDeviceSerialNumber(0)
-device = fn.openDevice(serial, pipeline=pipeline)
-
-# | FrameType.Color | FrameType.Ir)
-listener = SyncMultiFrameListener(FrameType.Depth)
-
-# Register listeners
-# device.setColorFrameListener(listener)
-device.setIrAndDepthFrameListener(listener)
-
-device.start()
 
 
 def video_export(depth):
     global video_out
 
-    # garder en mémoire le précédent état
-    if VARS['save'] == 1 and VARS['last_save'] == 0:
-        print("saving video")
-        now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        fps = 25
-        w, h = 512, 424
-        codec = cv2.VideoWriter_fourcc(*'MJPG')
-        filename = f"/home/thomas/Vidéos/interlignes/{now}.avi"
-        video_out = cv2.VideoWriter(filename, codec, fps, (w, h))
+    try:
+        if VARS['save'] == 1 and VARS['last_save'] == 0:
+            print("saving video")
+            now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            fps = 25
+            w, h = 512, 424
+            codec = cv2.VideoWriter_fourcc(*'MJPG')
+            filename = f"/home/thomas/Vidéos/interlignes/{now}.avi"
+            video_out = cv2.VideoWriter(filename, codec, fps, (w, h))
+            VARS['last_save'] = 1
+            
 
-        VARS['last_save'] == 1
-    if VARS['save'] == 1 and VARS['last_save'] == 1:
-        video_out.write(depth)
-        # gray = depth.asarray(np.uint8)
-        # v_img = cv2.cvtColor(depth_arr,depth_arr, cv2.CV_BGR2GRAY)
-        # gray = cv2.cvtColor(depth_arr, cv2.COLOR_BGR2GRAY)
-    elif VARS['save'] == 0 and VARS['last_save'] == 1:
-        video_out.release()
-        VARS['last_save'] == 0
-        
+        if VARS['save'] == 1 and VARS['last_save'] == 1:
+            # gray = cv2.cvtColor(depth, cv2.COLOR_BGR2GRAY)
+            # gray = depth.asarray(np.uint8)
+            color = cv2.cvtColor(depth, cv2.COLOR_GRAY2BGR);
+            video_out.write(color)
+            # v_img = cv2.cvtColor(depth_arr,depth_arr, cv2.CV_BGR2GRAY)
+        elif video_out != None and VARS['save'] == 0 and VARS['last_save'] == 1:
+            VARS['last_save'] = 0
+            video_out.release()
+            video_out = None
+    
+    except Exception as e:
+        print(e)
+        print(traceback.format_exc())
 
-tracked_points = {}
+
 
 
 def blob_detection(depth):
@@ -124,13 +96,12 @@ def blob_detection(depth):
         frame, VARS["max_depth"], 255, cv2.THRESH_TOZERO_INV)
     ret, frame = cv2.threshold(frame, VARS["theta"], 255, 0)
 
-    # remove noise, highlighting the car
-    # cv.Erode(car, car, iterations=2)
-    # cv.Dilate(car, car, iterations=5)
-
     out = frame.copy()
-    im2, contours, hierarchy = cv2.findContours(
+    im2, contours, hier = cv2.findContours(
         frame, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    # cv2.RETR_CCOMP,cv2.CHAIN_APPROX_SIMPLE
+
+
     # cv2.drawContours(depth, contours, -1, (255,255,0), 255)
 
     rects = []
@@ -141,26 +112,33 @@ def blob_detection(depth):
         # reject contours outside size range
         if w > VARS["max_blob_size"] or w < VARS["min_blob_size"] or h > VARS["max_blob_size"] or h < VARS["min_blob_size"]:
             continue
-        # # make sure the box is inside the frame
-        # if x <= 0 or y <= 0 or x+w >= (512 -1) or y+h >= (424 -1):
-        #     continue
-        # center = (int((x + w) / 2), int((y + h) / 2))
-        # points.append(center)
         rects.append((x, y, w, h))
         detections.append((x, y, x + w, y + h, 1))
-        # cv2.putText(out, f'{i}', center, font, 1, (0, 0, 255), 1, cv2.LINE_AA)
         cv2.rectangle(out, (x, y), (x + w, y + h), (255, 0, 0), 2)
     try:
-        # tracked_points = dict(mot.update(np.array(points), rects))
-
         detections = sort_tracker.update(np.array(detections))
-        tracked_points = {str(int(walker_id)):[int((x2+x1)/2), int((y2+y1)/2)] for x1, y1, x2, y2, walker_id in detections}
-        # tracked_points = dict()
+
+        new_tracked_points = {}
+
+        for x1, y1, x2, y2, walker_id in detections:
+            w_id = str(int(walker_id))
+            x = int((x2+x1)/2)
+            y = int((y2+y1)/2) 
+            if w_id in tracked_points:
+                # vérifier les distances entre les précédents et les nouveaux 
+                # pour n'envoyer que les points qui ont bougé
+                x0 = tracked_points[w_id][0]
+                y0 = tracked_points[w_id][1]
+                d =  np.sqrt((x-x0)**2 + (y-y0)**2)
+                if d < VARS['min_norm']:
+                    continue
+            new_tracked_points[w_id] = [x,y] 
+
+
+        tracked_points = new_tracked_points
+        # print(tracked_points)
 
         # TODO : vérifier si 'il y a des marcheurs nouveaux ou disparus
-        # vérifier les distances entre les précédents et les nouveaux 
-        # pour n'envoyer que les points necessaires
-        print(tracked_points)
 
 
     except Exception as e:
@@ -178,28 +156,25 @@ async def kinect_loop():
     # initialisation avec 100x l'image sauvegardée précédement
 
     while True:
-        frames = listener.waitForNewFrame()
-        depth = frames["depth"]
-
-        depth_arr = np.array((depth.asarray(np.float32)) /
-                             VARS['MAX_DIST'], dtype=np.uint8)
+        depth = kinect.get_frame()
+        depth_arr = np.array(depth / VARS['MAX_DIST'], dtype=np.uint8)
         depth_flip = cv2.flip(depth_arr, 1)
-
         video_export(depth_flip)
 
-        depth_blur = cv2.blur(depth_flip, (7, 7))
-
+        # depth_blur = cv2.blur(depth_flip, (5, 5))
         # acquisition et sauvegarde d'un masque
-        mask = bg_substractor.apply(depth_blur, learningRate=VARS["learnBG"])
-
-        blobs = blob_detection(mask)
+        # http://docs.opencv.org/3.0-beta/doc/py_tutorials/py_imgproc/py_morphological_ops/py_morphological_ops.html
+        mask = bg_substractor.apply(depth_flip, learningRate=VARS["learnBG"])
+        kernel = np.ones((5,5),np.uint8)
+        
+        depth_dilate = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel, 1)
+        blobs = blob_detection(depth_dilate)
         displayed_frame = np.hstack((depth_flip, blobs))
 
         if VARS["learnBG"] == 1:
             VARS["learnBG"] = 0
-            cv2.imwrite(bg_mask_path, depth_blur)
+            cv2.imwrite(bg_mask_path, depth_dilate)
 
-        listener.release(frames)
         await asyncio.sleep(0.01)
 
 
@@ -223,7 +198,7 @@ def create_corpus():
 
 
 corpus = create_corpus()
-current_paragraph = 30
+current_paragraph = 0
 
 app = Sanic(__name__)
 CORS(app)
@@ -284,6 +259,5 @@ if __name__ == '__main__':
         loop.run_forever()
     except:
         loop.stop()
-        device.stop()
-        device.close()
+        kinect.close()
         sys.exit(0)
