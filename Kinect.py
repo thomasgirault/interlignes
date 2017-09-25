@@ -14,33 +14,41 @@ setGlobalLogger(logger)
 # CUDA KDE : https://github.com/antlai/pylibfreenect2
 # Improve detection : https://stackoverflow.com/questions/38094594/detect-approximately-objects-on-depth-map
 
+
+# WRAPPING distorsion : https://github.com/OpenKinect/libfreenect2/issues/41
+
 class Kinect:
-    def __init__(self, need_bigdepth = False, need_color= True, need_color_depth_map = False):
+    def __init__(self, need_bigdepth = False, enable_rgb= True, need_color_depth_map = False):
         self.pipeline = OpenCLKdePacketPipeline(0)
         print("Packet pipeline:", type(self.pipeline).__name__)
-        fn = Freenect2()
-        num_devices = fn.enumerateDevices()
+        self.fn = Freenect2()
+        num_devices = self.fn.enumerateDevices()
         if num_devices == 0:
             print("No device connected!")
             sys.exit(1)
 
-        serial = fn.getDeviceSerialNumber(0)
-        self.device = fn.openDevice(serial, pipeline=self.pipeline)
+        serial = self.fn.getDeviceSerialNumber(0)
+        self.device = self.fn.openDevice(serial, pipeline=self.pipeline)
 
-        self.need_color = need_color
-        if self.need_color:
-            self.listener = SyncMultiFrameListener(FrameType.Color | FrameType.Ir | FrameType.Depth)
+
+        types = (FrameType.Ir | FrameType.Depth)
+        self.enable_rgb = enable_rgb
+        if self.enable_rgb:
+            types |= FrameType.Color
+
+        self.listener = SyncMultiFrameListener(types)
+        self.device.setIrAndDepthFrameListener(self.listener)
+    
+        if self.enable_rgb:
             self.device.setColorFrameListener(self.listener)
-        else:
-            self.listener = SyncMultiFrameListener(FrameType.Depth)
-
 
         # Register listeners
-        self.device.setIrAndDepthFrameListener(self.listener)
         self.device.start()
+        # self.device.startStreams(rgb=self.enable_rgb, depth=True)
+
 
         # NOTE: must be called after device.start()
-        if need_color:
+        if self.enable_rgb:
             self.registration = Registration(self.device.getIrCameraParams(), self.device.getColorCameraParams())
 
             self.undistorted = Frame(512, 424, 4)
@@ -54,7 +62,7 @@ class Kinect:
         frames = self.listener.waitForNewFrame()
         depth = frames["depth"]
 
-        if self.need_color:
+        if self.enable_rgb:
             color = frames["color"]
             ir = frames["ir"]
             self.registration.apply(color, depth, self.undistorted, self.registered,
@@ -64,10 +72,15 @@ class Kinect:
         self.listener.release(frames)
         return depth_array
 
-async def kinect_loop(response):
-    kinect = Kinect()
-    while True:
-        depth_array = kinect.get_frame()
+
+    def close(self):
+        self.device.stop()
+        self.device.close()
+
+# async def kinect_loop(response):
+#     kinect = Kinect()
+#     while True:
+#         depth_array = kinect.get_frame()
 
 
 
@@ -96,6 +109,3 @@ async def kinect_loop(response):
     # def draw(self):
     #     pass
     
-    # def close(self):
-    #     self.device.stop()
-    #     self.device.close()
