@@ -2,3 +2,4 @@ opencv
 pylibfreenect2
 numpy 
 sanic
+filterpy==1.0.0
