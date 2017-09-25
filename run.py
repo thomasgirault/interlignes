@@ -1,6 +1,8 @@
 import numpy as np
 import cv2
 import sys
+from datetime import datetime
+
 import traceback
 
 import asyncio
@@ -25,15 +27,21 @@ Config.KEEP_ALIVE = False
 
 
 from MultiObjectTracker import MultiObjectTracker
+from sort import Sort
 
 
 mot = MultiObjectTracker()
+sort_tracker = Sort(max_age=5, min_hits=10)
+
 
 MAX_DIST = 18750. / 255.
 VARS = {"min_depth": 0,
         "max_depth": 255,
         "theta": 0,
         "save": 0,
+        "last_save": 0,
+        "max_age":5, 
+        "min_hits":10,
         "MAX_DIST": MAX_DIST,
         "min_blob_size": 30,
         "max_blob_size": 500,
@@ -45,11 +53,9 @@ VARS = {"min_depth": 0,
 
 
 font = cv2.FONT_HERSHEY_SIMPLEX
-fps = 25
-w, h = 512, 424
-filename = '/tmp/depth.avi'
-codec = cv2.VideoWriter_fourcc(*'MJPG')
-video_out = cv2.VideoWriter(filename, codec, fps, (w, h))
+
+video_out = None 
+#cv2.VideoWriter(filename, codec, fps, (w, h))
 
 pipeline = OpenCLKdePacketPipeline(0)
 displayed_frame = None
@@ -81,16 +87,28 @@ device.start()
 
 
 def video_export(depth):
+    global video_out
+
     # garder en mémoire le précédent état
-    if VARS['save'] == 1:
+    if VARS['save'] == 1 and VARS['last_save'] == 0:
         print("saving video")
-        gray = depth.asarray(np.uint8)
+        now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        fps = 25
+        w, h = 512, 424
+        codec = cv2.VideoWriter_fourcc(*'MJPG')
+        filename = f"/home/thomas/Vidéos/interlignes/{now}.avi"
+        video_out = cv2.VideoWriter(filename, codec, fps, (w, h))
+
+        VARS['last_save'] == 1
+    if VARS['save'] == 1 and VARS['last_save'] == 1:
+        video_out.write(depth)
+        # gray = depth.asarray(np.uint8)
         # v_img = cv2.cvtColor(depth_arr,depth_arr, cv2.CV_BGR2GRAY)
         # gray = cv2.cvtColor(depth_arr, cv2.COLOR_BGR2GRAY)
-        video_out.write(gray)
-    elif VARS['save'] == 2:
+    elif VARS['save'] == 0 and VARS['last_save'] == 1:
         video_out.release()
-
+        VARS['last_save'] == 0
+        
 
 tracked_points = {}
 
@@ -115,9 +133,8 @@ def blob_detection(depth):
         frame, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     # cv2.drawContours(depth, contours, -1, (255,255,0), 255)
 
-    points = []
     rects = []
-
+    detections = []
     for i, cnt in enumerate(contours):
         # compute the bounding box for the contour
         (x, y, w, h) = cv2.boundingRect(cnt)
@@ -127,13 +144,25 @@ def blob_detection(depth):
         # # make sure the box is inside the frame
         # if x <= 0 or y <= 0 or x+w >= (512 -1) or y+h >= (424 -1):
         #     continue
-        center = (int((x + w) / 2), int((y + h) / 2))
-        points.append(center)
+        # center = (int((x + w) / 2), int((y + h) / 2))
+        # points.append(center)
         rects.append((x, y, w, h))
-        cv2.putText(out, f'{i}', center, font, 1, (0, 0, 255), 1, cv2.LINE_AA)
+        detections.append((x, y, x + w, y + h, 1))
+        # cv2.putText(out, f'{i}', center, font, 1, (0, 0, 255), 1, cv2.LINE_AA)
         cv2.rectangle(out, (x, y), (x + w, y + h), (255, 0, 0), 2)
     try:
-        tracked_points = dict(mot.update(np.array(points), rects))
+        # tracked_points = dict(mot.update(np.array(points), rects))
+
+        detections = sort_tracker.update(np.array(detections))
+        tracked_points = {str(int(walker_id)):[int((x2+x1)/2), int((y2+y1)/2)] for x1, y1, x2, y2, walker_id in detections}
+        # tracked_points = dict()
+
+        # TODO : vérifier si 'il y a des marcheurs nouveaux ou disparus
+        # vérifier les distances entre les précédents et les nouveaux 
+        # pour n'envoyer que les points necessaires
+        print(tracked_points)
+
+
     except Exception as e:
         print(e)
         print(traceback.format_exc())
@@ -154,18 +183,21 @@ async def kinect_loop():
 
         depth_arr = np.array((depth.asarray(np.float32)) /
                              VARS['MAX_DIST'], dtype=np.uint8)
-        depth_arr = cv2.blur(depth_arr, (7, 7))
-        depth_arr = cv2.flip(depth_arr, 1)
+        depth_flip = cv2.flip(depth_arr, 1)
+
+        video_export(depth_flip)
+
+        depth_blur = cv2.blur(depth_flip, (7, 7))
 
         # acquisition et sauvegarde d'un masque
-        mask = bg_substractor.apply(depth_arr, learningRate=VARS["learnBG"])
+        mask = bg_substractor.apply(depth_blur, learningRate=VARS["learnBG"])
 
         blobs = blob_detection(mask)
-        displayed_frame = np.hstack((mask, blobs))
+        displayed_frame = np.hstack((depth_flip, blobs))
 
         if VARS["learnBG"] == 1:
             VARS["learnBG"] = 0
-            cv2.imwrite(bg_mask_path, depth_arr)
+            cv2.imwrite(bg_mask_path, depth_blur)
 
         listener.release(frames)
         await asyncio.sleep(0.01)
@@ -224,8 +256,8 @@ async def tracker(request, ws):
     # http://damienclarke.me/code/posts/writing-a-better-noise-reducing-analogread
     # exponential moving avg
     alpha = 0.5
-    previous = np.array([0.0, 0.0])
-    convert = np.array([1920. / 512., 1080 / 424.])
+    # previous = np.array([0.0, 0.0])
+    # convert = np.array([1920. / 512., 1080 / 424.])
     while True:
         if tracked_points != {}:
             await ws.send(js.dumps(tracked_points))
