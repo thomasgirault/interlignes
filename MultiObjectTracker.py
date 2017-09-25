@@ -14,8 +14,12 @@ class MultiObjectTracker:
     # (taken as average between width and height).
     distanceThreshold = 10
     distanceMovingThreshold = 5
+    
     # Kill a tracker if it has gone missedFramesThreshold frames without receiving a measurement.
+    # Tracks are terminated if they are not detected for TLost frames.
     missedFramesThreshold = 10
+
+
     # Delta time, used to set up matrices for Kalman trackers.
     dt = 0.2  # Delta time, used to set up matrices for Kalman trackers.
     # Magnitude of acceleration noise. Used to set up Kalman trackers.
@@ -29,9 +33,41 @@ class MultiObjectTracker:
             n_neighbors=1, algorithm='brute', metric='euclidean')
         self.knn.fit(self.tracked)
 
-    def update(self, mass_centers, bounding_rects):
+
+    def hungarian(self, mass_centers, bounding_rects):
+        """
+        1 - calculer la matrice D des distances entre pos_i et pos_i+1
+        2 - transformer D en matrice carrée
+        3 - appliquer l'algorithme hongrois (asgn, cost)=OPTASIGN(D)
+        4 - rejeter les distances plus élévées qu'un seuil fixé
+
+        https://www.youtube.com/watch?v=HQW4wtLBddk&t=384
+
+
+        'tracklets'
+
+        SORT https://arxiv.org/pdf/1602.00763.pdf
+        x = [cx, cy, s, r, cx',cy',s']T
+        cx, cy : coordonnées du centre
+        s : scale (aire)
+        r : ratio
+
+        If no detection is associated to the target,
+        its state is simply predicted without correction using the
+        linear velocity model.
+
+        IOU : Intersection over Union distance between each detection and all predicted bounding boxes from the existing targets        
+        """
+        
+        pass
+
+
+    def update(self, rects):
         """Update the object tracker with the mass centers of the observed boundings rects."""
         tracking_outputs = None
+
+        mass_centers = np.array([(rects[0] + rects[2]) /2., (rects[1] + rects[3]) /2.]) 
+        # mass_centers = (int((x + w) / 2), int((y + h) / 2))
 
         # le point peut inclure
         # - la couleur normalisée des mass_centers ?
