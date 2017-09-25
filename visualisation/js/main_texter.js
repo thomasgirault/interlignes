@@ -7,6 +7,7 @@ var texters = []
 var nb_texters = 30;
 var lastIndex = 0;
 
+// activer et desactiver les texters en fonction du tracking en cours 
 
 for (i = 0; i < nb_texters; i++) {
 	var t = new Texter(i);
@@ -32,10 +33,9 @@ Maptastic("canvas");
 
 tracker.onmessage = function (event) {
 	if (typeof event.data === 'string' || event.data instanceof String) {
-		// console.log(event.data)
-		var points = $.parseJSON(event.data);
-		$.each(points, function (index, value) {
-			var i = parseInt(index);
+		$.each($.parseJSON(event.data), function (index, value) {
+			var i = parseInt(index) % nb_texters;
+			console.log(value);
 			texters[i].tracked_point = [(1920. / 512.) * value[0], (1080 / 424.) * value[1]];
 		});
 	}
