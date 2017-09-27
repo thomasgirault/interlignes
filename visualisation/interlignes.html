@@ -16,6 +16,13 @@
 			overflow: hidden;
 		}
 
+		/* #interlude {
+			float: left;
+			width: 100%;
+			height: 100%;
+			margin: 0px;
+			z-index: 10;
+		} */
 		/* #defaultCanvas0 {
 			position: absolute;
 			top: 0;
@@ -23,14 +30,15 @@
 			z-index: -1;
 			cursor: crosshair;
 		} */
-		
 		/* -webkit-user-select: none; */
 		/* cursor: none; */
-		
-		#canvas {
+
+		/* #canvas {
 			position: relative;
-			/* z-index: -1; */
-		}
+			opacity: 1.0;
+			 z-index: -1; 
+		} */
+
 	</style>
 
 	<!-- JS -->
@@ -43,8 +51,12 @@
 </head>
 
 <body>
+	<!-- <canvas id='buffer'></canvas> -->
+	<video id="interlude" autoplay="true" preload = "auto" src="videos/DEUX_POINTS_2_1.mov"></video>
 	<canvas id='canvas'></canvas>
 	<script type="text/javascript" src="js/main_texter.js"></script>
+	<!-- controls="controls" poster="" -->
+
 </body>
 
 </html>
