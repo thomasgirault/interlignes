@@ -8,7 +8,7 @@ import asyncio
 from signal import signal, SIGINT
 import json as js
 
-from Kinect import Kinect
+from Kinect import Kinect, DepthVideo
 from sort import Sort
 
 from sanic import Sanic, response
@@ -24,32 +24,37 @@ Config.KEEP_ALIVE = False
 # mot = MultiObjectTracker()
 
 
-
 MAX_DIST = 18750. / 255.
 VARS = {"min_depth": 0,
         "max_depth": 255,
         "theta": 0,
         "save": 0,
         "last_save": 0,
-        "max_age":5, 
-        "min_hits":10,
+        "max_age": 5,
+        "min_hits": 10,
         "MAX_DIST": MAX_DIST,
         "min_blob_size": 30,
         "max_blob_size": 500,
+        "erode_kernel_size": 5,
+        "erode_iterations": 1,
+        "smooth": 0,
         "learnBG": 0,
-        "min_norm": 1,
-        "extra_spaces": 5}
+        "min_norm": 5,
+        "extra_spaces": 15}
 
 # TODO : Doit être stocké comme un JSON à l'exterieur de l'application en lien avec l'appli JS
 
 
 font = cv2.FONT_HERSHEY_SIMPLEX
-video_out = None 
+video_out = None
 displayed_frame = None
 tracked_points = {}
-kinect = Kinect()
-sort_tracker = Sort(max_age=5, min_hits=10)
 
+# kinect = Kinect()
+
+kinect = DepthVideo(
+    video_path="/home/thomas/Vidéos/interlignes/2017-09-25 19:37:59.avi")
+sort_tracker = Sort(max_age=100, min_hits=3)
 
 
 def video_export(depth):
@@ -65,24 +70,18 @@ def video_export(depth):
             filename = f"/home/thomas/Vidéos/interlignes/{now}.avi"
             video_out = cv2.VideoWriter(filename, codec, fps, (w, h))
             VARS['last_save'] = 1
-            
 
         if VARS['save'] == 1 and VARS['last_save'] == 1:
-            # gray = cv2.cvtColor(depth, cv2.COLOR_BGR2GRAY)
-            # gray = depth.asarray(np.uint8)
-            color = cv2.cvtColor(depth, cv2.COLOR_GRAY2BGR);
+            color = cv2.cvtColor(depth, cv2.COLOR_GRAY2BGR)
             video_out.write(color)
-            # v_img = cv2.cvtColor(depth_arr,depth_arr, cv2.CV_BGR2GRAY)
         elif video_out != None and VARS['save'] == 0 and VARS['last_save'] == 1:
             VARS['last_save'] = 0
             video_out.release()
             video_out = None
-    
+
     except Exception as e:
         print(e)
         print(traceback.format_exc())
-
-
 
 
 def blob_detection(depth):
@@ -97,12 +96,11 @@ def blob_detection(depth):
     ret, frame = cv2.threshold(frame, VARS["theta"], 255, 0)
 
     out = frame.copy()
+    out = cv2.cvtColor(out, cv2.COLOR_GRAY2BGR)
+
     im2, contours, hier = cv2.findContours(
         frame, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     # cv2.RETR_CCOMP,cv2.CHAIN_APPROX_SIMPLE
-
-
-    # cv2.drawContours(depth, contours, -1, (255,255,0), 255)
 
     rects = []
     detections = []
@@ -122,24 +120,28 @@ def blob_detection(depth):
 
         for x1, y1, x2, y2, walker_id in detections:
             w_id = str(int(walker_id))
-            x = int((x2+x1)/2)
-            y = int((y2+y1)/2) 
+            x = int((x2 + x1) / 2)
+            y = int((y2 + y1) / 2)
             if w_id in tracked_points:
-                # vérifier les distances entre les précédents et les nouveaux 
+                # vérifier les distances entre les précédents et les nouveaux
                 # pour n'envoyer que les points qui ont bougé
                 x0 = tracked_points[w_id][0]
                 y0 = tracked_points[w_id][1]
-                d =  np.sqrt((x-x0)**2 + (y-y0)**2)
-                if d < VARS['min_norm']:
-                    continue
-            new_tracked_points[w_id] = [x,y] 
+                # d =  np.sqrt((x-x0)**2 + (y-y0)**2)
+                # if d < VARS['min_norm']:
+                #     continue
 
+                # x += (x - x0) * VARS['smooth'] / 10
+                # y += (y - y0) * VARS['smooth'] / 10
+
+            new_tracked_points[w_id] = [x, y]
+            cv2.circle(out,(x,y), 10, (0,0,255), -1)
+            cv2.putText(out, w_id,(x,y), font, 1,(255,255,0),2,cv2.LINE_AA)
 
         tracked_points = new_tracked_points
         # print(tracked_points)
 
         # TODO : vérifier si 'il y a des marcheurs nouveaux ou disparus
-
 
     except Exception as e:
         print(e)
@@ -156,20 +158,30 @@ async def kinect_loop():
     # initialisation avec 100x l'image sauvegardée précédement
 
     while True:
-        depth = kinect.get_frame()
-        depth_arr = np.array(depth / VARS['MAX_DIST'], dtype=np.uint8)
-        depth_flip = cv2.flip(depth_arr, 1)
+        depth_flip = kinect.get_frame()
         video_export(depth_flip)
 
-        # depth_blur = cv2.blur(depth_flip, (5, 5))
         # acquisition et sauvegarde d'un masque
         # http://docs.opencv.org/3.0-beta/doc/py_tutorials/py_imgproc/py_morphological_ops/py_morphological_ops.html
-        mask = bg_substractor.apply(depth_flip, learningRate=VARS["learnBG"])
-        kernel = np.ones((5,5),np.uint8)
         
-        depth_dilate = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel, 1)
+        
+        mask = bg_substractor.apply(depth_flip, learningRate=VARS["learnBG"])
+
+        kernel = np.ones((VARS["erode_kernel_size"],
+                          VARS["erode_kernel_size"]), np.uint8)
+        mask_dilate = cv2.morphologyEx(
+            mask, cv2.MORPH_OPEN, kernel, VARS["erode_iterations"])
+
+        mask_dilate = cv2.blur(mask_dilate, (5, 5))
+
+
+        # depth_dilate = cv2.bitwise_and(depth_flip, depth_flip, mask=mask_dilate)
+        depth_dilate = cv2.bitwise_and(depth_flip, mask_dilate)
+
+
         blobs = blob_detection(depth_dilate)
-        displayed_frame = np.hstack((depth_flip, blobs))
+        displayed_frame = blobs
+        # displayed_frame = np.hstack((depth_flip, blobs))
 
         if VARS["learnBG"] == 1:
             VARS["learnBG"] = 0
@@ -225,28 +237,15 @@ def paragraphe(request, walker_id):
     return json({"received": True, "walker_id": walker_id, "texte": texte})
 
 
-# TODO : fusionner corpus et tracker
+# exponential moving avg : http://damienclarke.me/code/posts/writing-a-better-noise-reducing-analogread
 @app.websocket('/tracker')
 async def tracker(request, ws):
-    # http://damienclarke.me/code/posts/writing-a-better-noise-reducing-analogread
-    # exponential moving avg
-    alpha = 0.5
-    # previous = np.array([0.0, 0.0])
-    # convert = np.array([1920. / 512., 1080 / 424.])
     while True:
         if tracked_points != {}:
             await ws.send(js.dumps(tracked_points))
         await asyncio.sleep(0.01)
 
-        # norm = np.linalg.norm(previous - mot.tracked)
-        # faire une serie de normes sur un vecteur de coordonnée ?
-        # if norm > VARS["min_norm"]:
-        #     previous = mot.tracked
-        #     # not np.allclose(previous, mot.tracked):
-        #     # previous = (mot.tracked - previous) * alpha
-        #     res = (previous * convert).astype(int)
-        #     await ws.send(str(res.tolist()))
-app.static('/visualisation', './visualisation')
+app.static('/', './visualisation')
 
 
 if __name__ == '__main__':
