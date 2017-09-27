@@ -4,8 +4,8 @@ __pycache__/
 *$py.class
 
 .vscode
-visualisation/node_modules/*
-
+# visualisation/node_modules/*
+*.mov
 
 # C extensions
 *.so
