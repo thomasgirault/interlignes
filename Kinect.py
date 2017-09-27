@@ -17,8 +17,45 @@ setGlobalLogger(logger)
 
 # WRAPPING distorsion : https://github.com/OpenKinect/libfreenect2/issues/41
 
+class DepthVideo:
+
+    def __init__(self, video_path):
+        self.video_path = video_path
+        self.cap = cv2.VideoCapture(video_path)
+        self.frame_counter = 0
+        self.gray = None
+
+    def get_frame(self):
+        try:
+            # if self.gray is not None and ((self.frame_counter%2) == 1):
+            #     return self.gray
+
+            if not self.cap.isOpened():
+                print("reopen Video")
+
+            ret, frame = self.cap.read()
+            self.frame_counter += 1
+            if self.frame_counter == self.cap.get(cv2.CAP_PROP_FRAME_COUNT):
+                # If the last frame is reached, reset the capture and the frame_counter
+                self.frame_counter = 0  # Or whatever as long as it is the same as next line
+                self.cap = cv2.VideoCapture(self.video_path)
+                # self.cap.set(cv2.cv.CV_CAP_PROP_POS_FRAMES, 0)
+
+            self.gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            return self.gray
+        except Exception as e:
+            print(e)
+
+    def close(self):
+        self.cap.release()
+
+
 class Kinect:
-    def __init__(self, need_bigdepth = False, enable_rgb= True, need_color_depth_map = False):
+
+    max_dist = 70
+
+    def __init__(self, need_bigdepth=False, enable_rgb=False, need_color_depth_map=False):
+        self.enable_rgb = enable_rgb
         self.pipeline = OpenCLKdePacketPipeline(0)
         print("Packet pipeline:", type(self.pipeline).__name__)
         self.fn = Freenect2()
@@ -30,26 +67,24 @@ class Kinect:
         serial = self.fn.getDeviceSerialNumber(0)
         self.device = self.fn.openDevice(serial, pipeline=self.pipeline)
 
-
         types = (FrameType.Ir | FrameType.Depth)
-        self.enable_rgb = enable_rgb
         if self.enable_rgb:
             types |= FrameType.Color
 
         self.listener = SyncMultiFrameListener(types)
-        self.device.setIrAndDepthFrameListener(self.listener)
-    
+
         if self.enable_rgb:
             self.device.setColorFrameListener(self.listener)
+        self.device.setIrAndDepthFrameListener(self.listener)
 
         # Register listeners
         self.device.start()
         # self.device.startStreams(rgb=self.enable_rgb, depth=True)
 
-
         # NOTE: must be called after device.start()
         if self.enable_rgb:
-            self.registration = Registration(self.device.getIrCameraParams(), self.device.getColorCameraParams())
+            self.registration = Registration(
+                self.device.getIrCameraParams(), self.device.getColorCameraParams())
 
             self.undistorted = Frame(512, 424, 4)
             self.registered = Frame(512, 424, 4)
@@ -57,7 +92,7 @@ class Kinect:
             self.color_depth_map = np.zeros((424, 512), np.int32).ravel() \
                 if need_color_depth_map else None
 
-
+    
     def get_frame(self):
         frames = self.listener.waitForNewFrame()
         depth = frames["depth"]
@@ -65,13 +100,19 @@ class Kinect:
         if self.enable_rgb:
             color = frames["color"]
             ir = frames["ir"]
+            
             self.registration.apply(color, depth, self.undistorted, self.registered,
                                     bigdepth=self.bigdepth, color_depth_map=self.color_depth_map)
 
-        depth_array = depth.asarray(np.float32)
-        self.listener.release(frames)
-        return depth_array
 
+        # depth_dist = np.array(ir.asarray() / 2, dtype=np.uint8)
+        # depth_array = self.bigdepth.asarray(np.float32)
+        depth_array = depth.asarray(np.float32)
+        depth_dist = np.array(depth_array / self.max_dist, dtype=np.uint8)
+        depth_flip = cv2.flip(depth_dist, 1)
+
+        self.listener.release(frames)
+        return depth_flip
 
     def close(self):
         self.device.stop()
@@ -81,10 +122,6 @@ class Kinect:
 #     kinect = Kinect()
 #     while True:
 #         depth_array = kinect.get_frame()
-
-
-
-
 
         # color_img = self.registered.asarray(np.uint8)
         # depth_arr = np.array((depth.asarray(np.float32))  / depth_range['MAX_DIST'], dtype=np.uint8)
@@ -96,8 +133,6 @@ class Kinect:
 
         # # response.write(b'--frame\r\n'
         # #     b'Content-Type: image/jpeg\r\n\r\n' + bytearray(f) + b'\r\n')
-        
-
 
     # def rotate(self, x, y, z):
     #     """http://mathworld.wolfram.com/RotationMatrix.html"""
@@ -108,4 +143,3 @@ class Kinect:
 
     # def draw(self):
     #     pass
-    
