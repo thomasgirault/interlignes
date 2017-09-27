@@ -71,7 +71,7 @@ class KalmanBoxTracker(object):
   This class represents the internel state of individual tracked objects observed as bbox.
   """
   count = 0
-  def __init__(self,bbox):
+  def __init__(self,bbox, t_id = None):
     """
     Initialises a tracker using initial bounding box.
     """
@@ -88,7 +88,10 @@ class KalmanBoxTracker(object):
 
     self.kf.x[:4] = convert_bbox_to_z(bbox)
     self.time_since_update = 0
-    self.id = KalmanBoxTracker.count
+
+    self.id = KalmanBoxTracker.count if t_id is None else t_id
+    print("NEW WALKER", self.id)
+
     KalmanBoxTracker.count += 1
     self.history = []
     self.hits = 0
@@ -175,6 +178,7 @@ class Sort(object):
     self.min_hits = min_hits
     self.trackers = []
     self.frame_count = 0
+    self.available_ids = []
 
   def update(self,dets):
     """
@@ -199,6 +203,7 @@ class Sort(object):
     for t in reversed(to_del):
       self.trackers.pop(t)
     matched, unmatched_dets, unmatched_trks = associate_detections_to_trackers(dets,trks)
+    # print(f"matched : {matched}, unmatched_dets : {unmatched_dets}, unmatched_trks : {unmatched_trks}")
 
     #update matched trackers with assigned detections
     for t,trk in enumerate(self.trackers):
@@ -208,7 +213,8 @@ class Sort(object):
 
     #create and initialise new trackers for unmatched detections
     for i in unmatched_dets:
-        trk = KalmanBoxTracker(dets[i,:]) 
+        t_id = self.available_ids.pop() if len(self.available_ids) > 0 else None
+        trk = KalmanBoxTracker(dets[i,:], t_id=t_id) 
         self.trackers.append(trk)
     i = len(self.trackers)
     for trk in reversed(self.trackers):
@@ -218,6 +224,10 @@ class Sort(object):
         i -= 1
         #remove dead tracklet
         if(trk.time_since_update > self.max_age):
+          self.available_ids.append(trk.id)
+          # self.available_positions.append(trk.id)
+
+          print("LOST WALKER", trk.id)
           self.trackers.pop(i)
     if(len(ret)>0):
       return np.concatenate(ret)
