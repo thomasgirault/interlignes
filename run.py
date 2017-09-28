@@ -50,11 +50,13 @@ video_out = None
 displayed_frame = None
 tracked_points = {}
 
-# kinect = Kinect()
+try:
+    kinect = Kinect()
+except Exception as e:
+    video_path="/home/thomas/Vidéos/interlignes/2017-09-25 19:37:59.avi"
+    kinect = DepthVideo(video_path)
 
-kinect = DepthVideo(
-    video_path="/home/thomas/Vidéos/interlignes/2017-09-25 19:37:59.avi")
-sort_tracker = Sort(max_age=100, min_hits=3)
+sort_tracker = Sort(max_age=5, min_hits=3)
 
 
 def video_export(depth):

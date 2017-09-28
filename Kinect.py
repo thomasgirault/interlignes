@@ -62,7 +62,8 @@ class Kinect:
         num_devices = self.fn.enumerateDevices()
         if num_devices == 0:
             print("No device connected!")
-            sys.exit(1)
+            raise Exception("Pas de kinect connectée")
+            # sys.exit(1)
 
         serial = self.fn.getDeviceSerialNumber(0)
         self.device = self.fn.openDevice(serial, pipeline=self.pipeline)
