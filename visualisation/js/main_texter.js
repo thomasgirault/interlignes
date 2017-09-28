@@ -4,7 +4,6 @@ var context = canvas.getContext('2d');
 
 // var bufferCanvas = document.getElementById('buffer');
 // var buffer = bufferCanvas.getContext('2d');
-var width = 1920, height = 1080;
 
 
 
@@ -22,10 +21,20 @@ for (i = 0; i < nb_texters; i++) {
 }
 
 
-var tracker = new WebSocket("ws://127.0.0.1:8888/tracker");
+// https://github.com/joewalnes/reconnecting-websocket
+var tracker = new ReconnectingWebSocket("ws://127.0.0.1:8888/tracker");
+// WebSocket
 
+tracker.onopen = function(e){
+	console.log("WebSocketClient connected:",e);
+}
+
+var width = 1920, height = 1080;
 var height_ratio = (height / 424.);
-var width_ratio = (width / 512.);
+var width_ratio = height_ratio;
+var dx = (width - height) / 2.;
+// var width_ratio = (width / 512.);
+
 
 
 tracker.onmessage = function (event) {
@@ -33,24 +42,21 @@ tracker.onmessage = function (event) {
 	if (typeof event.data === 'string' || event.data instanceof String) {
 		$.each($.parseJSON(event.data), function (index, value) {
 			var i = parseInt(index) % nb_texters;
-			texters[i].tracked_point = [width_ratio * value[0], height_ratio * value[1]];
+			texters[i].tracked_point = [width_ratio * value[0] + dx, height_ratio * value[1]];
 		});
 	}
 };
 
 
-function processFrame() {
+function write_transparent_video() {
 	buffer.drawImage(video, 0, 0, width, height);
-
 	// this can be done without alphaData, except in Firefox which doesn't like it when image is bigger than the canvas
 	var image = buffer.getImageData(0, 0, width, height),
 		imageData = image.data,
 		alphaData = buffer.getImageData(0, height, width, height).data;
-
 	for (var i = 3, len = imageData.length; i < len; i = i + 4) {
 		imageData[i] = alphaData[i - 1];
 	}
-
 	context.putImageData(image, 0, 0, 0, 0, width, height);
 }
 
@@ -73,7 +79,7 @@ function init() {
 	raf = window.requestAnimationFrame(init);
 }
 
-video.addEventListener("play", draw_video, false);
+// video.addEventListener("play", draw_video, false);
 function draw_video() {
 	if (video.paused || video.ended) {
 		return;
