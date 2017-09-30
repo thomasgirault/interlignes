@@ -53,7 +53,7 @@ tracked_points = {}
 try:
     kinect = Kinect()
 except Exception as e:
-    video_path="/home/thomas/Vidéos/interlignes/2017-09-25 19:37:59.avi"
+    video_path = "/home/thomas/Vidéos/interlignes/2017-09-25 19:37:59.avi"
     kinect = DepthVideo(video_path)
 
 sort_tracker = Sort(max_age=5, min_hits=3)
@@ -86,16 +86,16 @@ def video_export(depth):
         print(traceback.format_exc())
 
 
-def blob_detection(depth):
+def blob_detection(frame):
     global tracked_points
 
     # http://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_imgproc/py_contours/py_contour_features/py_contour_features.html
     # https://stackoverflow.com/questions/32414559/opencv-contour-minimum-dimension-location-in-python
-    ret, frame = cv2.threshold(
-        depth, VARS["min_depth"], 255, cv2.THRESH_TOZERO)
-    ret, frame = cv2.threshold(
-        frame, VARS["max_depth"], 255, cv2.THRESH_TOZERO_INV)
-    ret, frame = cv2.threshold(frame, VARS["theta"], 255, 0)
+    # ret, frame = cv2.threshold(
+    #     frame, VARS["min_depth"], 255, cv2.THRESH_TOZERO)
+    # ret, frame = cv2.threshold(
+    #     frame, VARS["max_depth"], 255, cv2.THRESH_TOZERO_INV)
+    # ret, frame = cv2.threshold(frame, VARS["theta"], 255, 0)
 
     out = frame.copy()
     out = cv2.cvtColor(out, cv2.COLOR_GRAY2BGR)
@@ -124,24 +124,25 @@ def blob_detection(depth):
             w_id = str(int(walker_id))
             x = int((x2 + x1) / 2)
             y = int((y2 + y1) / 2)
-            if w_id in tracked_points:
-                # vérifier les distances entre les précédents et les nouveaux
-                # pour n'envoyer que les points qui ont bougé
-                x0 = tracked_points[w_id][0]
-                y0 = tracked_points[w_id][1]
-                # d =  np.sqrt((x-x0)**2 + (y-y0)**2)
-                # if d < VARS['min_norm']:
-                #     continue
-
-                # x += (x - x0) * VARS['smooth'] / 10
-                # y += (y - y0) * VARS['smooth'] / 10
-
             new_tracked_points[w_id] = [x, y]
-            cv2.circle(out,(x,y), 10, (0,0,255), -1)
-            cv2.putText(out, w_id,(x,y), font, 1,(255,255,0),2,cv2.LINE_AA)
+            cv2.circle(out, (x, y), 10, (0, 0, 255), -1)
+            cv2.putText(out, w_id, (x, y), font, 1,
+                        (255, 255, 0), 2, cv2.LINE_AA)
 
         tracked_points = new_tracked_points
-        # print(tracked_points)
+        # if w_id in tracked_points:
+        # vérifier les distances entre les précédents et les nouveaux
+        # pour n'envoyer que les points qui ont bougé
+        # x0 = tracked_points[w_id][0]
+        # y0 = tracked_points[w_id][1]
+        # d =  np.sqrt((x-x0)**2 + (y-y0)**2)
+        # if d < VARS['min_norm']:
+        #     continue
+
+        # x += (x - x0) * VARS['smooth'] / 10
+        # y += (y - y0) * VARS['smooth'] / 10
+        # new_tracked_points[w_id] = {"x":x, "y":y}
+        # new_tracked_points.append({"tracker":w_id, "x":x, "y":y})
 
         # TODO : vérifier si 'il y a des marcheurs nouveaux ou disparus
 
@@ -155,7 +156,8 @@ async def kinect_loop():
     global displayed_frame
     bg_mask_path = "/home/thomas/dev/Interlignes/interlignes/bg.jpg"
     bg_mask = cv2.imread(bg_mask_path, cv2.IMREAD_GRAYSCALE)
-    bg_substractor = cv2.createBackgroundSubtractorMOG2(history=1)
+    bg_substractor = cv2.createBackgroundSubtractorMOG2(
+        history=1)  # , detectShadows = False
     mask = bg_substractor.apply(bg_mask, learningRate=1)
     # initialisation avec 100x l'image sauvegardée précédement
 
@@ -165,8 +167,7 @@ async def kinect_loop():
 
         # acquisition et sauvegarde d'un masque
         # http://docs.opencv.org/3.0-beta/doc/py_tutorials/py_imgproc/py_morphological_ops/py_morphological_ops.html
-        
-        
+
         mask = bg_substractor.apply(depth_flip, learningRate=VARS["learnBG"])
 
         kernel = np.ones((VARS["erode_kernel_size"],
@@ -176,10 +177,8 @@ async def kinect_loop():
 
         mask_dilate = cv2.blur(mask_dilate, (5, 5))
 
-
         # depth_dilate = cv2.bitwise_and(depth_flip, depth_flip, mask=mask_dilate)
         depth_dilate = cv2.bitwise_and(depth_flip, mask_dilate)
-
 
         blobs = blob_detection(depth_dilate)
         displayed_frame = blobs
@@ -189,7 +188,7 @@ async def kinect_loop():
             VARS["learnBG"] = 0
             cv2.imwrite(bg_mask_path, depth_dilate)
 
-        await asyncio.sleep(0.01)
+        await asyncio.sleep(0)
 
 
 async def frame_streamer(response):
@@ -198,7 +197,7 @@ async def frame_streamer(response):
         f = jpeg.tobytes()
         response.write(
             b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + bytearray(f) + b'\r\n')
-        await asyncio.sleep(0.01)
+        await asyncio.sleep(0)
 
 
 def create_corpus():
@@ -230,6 +229,16 @@ def post_json(request, name, value):
     return json({"received": True, "name": name, "value": value})
 
 
+new_params = {}
+
+
+@app.route("/web_param/<name>/<value>", methods=['POST', 'OPTIONS'])
+def post_json(request, name, value):
+    new_params[name] = value
+    return json({"received": True, "name": name, "value": value})
+
+
+# TODO : générer le texte XML directement dans l'appli Web ?
 @app.route("/paragraphe/<walker_id>", methods=['POST', 'OPTIONS'])
 def paragraphe(request, walker_id):
     global current_paragraph
@@ -242,10 +251,15 @@ def paragraphe(request, walker_id):
 # exponential moving avg : http://damienclarke.me/code/posts/writing-a-better-noise-reducing-analogread
 @app.websocket('/tracker')
 async def tracker(request, ws):
+    global new_params
     while True:
         if tracked_points != {}:
-            await ws.send(js.dumps(tracked_points))
-        await asyncio.sleep(0.01)
+            await ws.send(js.dumps({"walkers": tracked_points}))
+        if new_params != {}:
+            await ws.send(js.dumps({"control": new_params}))
+            new_params = {}
+        await asyncio.sleep(0)
+
 
 app.static('/', './visualisation')
 
