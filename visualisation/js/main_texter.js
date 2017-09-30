@@ -7,7 +7,6 @@ var context = canvas.getContext('2d');
 
 
 
-Maptastic("canvas");
 
 
 var texters = []
@@ -40,10 +39,16 @@ var dx = (width - height) / 2.;
 tracker.onmessage = function (event) {
 	// activer et desactiver les texters en fonction du tracking en cours 
 	if (typeof event.data === 'string' || event.data instanceof String) {
-		$.each($.parseJSON(event.data), function (index, value) {
-			var i = parseInt(index) % nb_texters;
-			texters[i].tracked_point = [width_ratio * value[0] + dx, height_ratio * value[1]];
-		});
+		var data = $.parseJSON(event.data);
+
+		if("walkers" in data){
+			$.each(data.walkers, function (index, value) {
+				var i = parseInt(index) % nb_texters;
+				texters[i].tracked_point = [width_ratio * value[0] + dx, height_ratio * value[1]];
+			});
+		} else if ("control" in data) {
+			set_data(data.control);
+		}
 	}
 };
 
@@ -90,6 +95,9 @@ function draw_video() {
 }
 
 init();
+
+Maptastic("canvas");
+
 // draw_video();
 
 // var gui = new dat.GUI();

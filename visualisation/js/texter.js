@@ -1,5 +1,20 @@
 var defaultText = 'Texter ';
 
+var params = {
+
+    "minFontSize": 8,
+    "maxFontSize": 400
+};
+
+
+set_data = function (dico) {
+    for (i in dico) {
+        params[i] = parseInt(dico[i]);
+        console.log(i, dico[i]);
+    }
+};
+
+
 function Texter(id) {
 
     var _this = this;
@@ -11,6 +26,10 @@ function Texter(id) {
     this.bgColor = "#000000";
     this.curFontSize = 12;
     this.varFontSize = 0.4;
+
+    this.minFontSize = 8;
+    this.maxFontSize = 400;
+
     this.angle = 0;
     this.angleDelta = 0;
     this.angleDistortion = 0.01;
@@ -35,6 +54,7 @@ function Texter(id) {
         update();
         askNewText();
     };
+
 
 
     function update() {
@@ -110,11 +130,17 @@ function Texter(id) {
     };
 
 
-
     function calcFontSize(d) {
-        var fontSize = _this.curFontSize + d * _this.varFontSize;
+        var fontSize = params["minFontSize"] + d / 2;
+        if (fontSize > params["maxFontSize"])
+            fontSize = params["maxFontSize"];
         return fontSize;
     }
+    // var fontSize = _this.minFontSize + d / 2;
+    // if (fontSize > _this.maxFontSize)
+    //     fontSize = _this.maxFontSize;
+
+    // var fontSize = _this.curFontSize + d * _this.varFontSize;
 
     function letter_to_context(letter) {
         context.save();
