@@ -1,8 +1,11 @@
 class Controls{    
-    constructor(params) {        
-        this.gui = new dat.GUI();
-        this.gui.remember(params);
+    constructor(gui, folder_name, params, url) {
         
+        // this.gui = gui; 
+        this.folder = gui.addFolder(folder_name);        
+        this.url = url;
+
+
         var stp = 1;
         for(var name in params){
             var p = params[name];
@@ -14,11 +17,13 @@ class Controls{
     }
     
     add_button(name){
+        var self = this;
+        
         var obj = {learnBG:
             function(){
                 $.ajax({
                     type: "POST",
-                    url: "http://localhost:8888/param/" + name + "/" + Math.round(1),
+                    url: self.url + "/" + name + "/" + Math.round(1),
                     data: JSON.stringify({name: Math.round(0)}),
                     contentType: "application/json; charset=utf-8",
                     dataType: "json",
@@ -27,17 +32,18 @@ class Controls{
                 });
             }   
         };
-        this.gui.add(obj,"learnBG");
+        this.folder.add(obj,"learnBG");
     }
 
     add_param(n, val, min_, max_, stp){
         var o = {};
         o[n] = val;
-         
-        this.gui.add(o, n, min_, max_).onChange( function(value) {
+        var self = this;
+        
+        this.folder.add(o, n, min_, max_).onChange( function(value) {
             $.ajax({
                 type: "POST",
-                url: "http://localhost:8888/param/" + n + "/" + Math.round(value),
+                url: self.url + "/" + n + "/" + Math.round(value),
                 data: JSON.stringify({n: Math.round(value)}),
                 contentType: "application/json; charset=utf-8",
                 dataType: "json",
@@ -63,6 +69,23 @@ params = {"min_depth":{"val":0, "min":0, "max":255},
          "learnBG":{"min":null, "max":null}
         };
 
-window.onload = function(){          
-    var c = new Controls(params);
+var web_params = {
+ "minFontSize":{"val":20, "min":3, "max":100},
+ "maxFontSize":{"val":100, "min":30, "max":300},
+ "clearPeriod":{"val":20, "min":1, "max":100}
+}
+
+
+
+window.onload = function(){
+
+    gui = new dat.GUI();
+    // gui.remember(params);
+
+    var url_server_params = "http://localhost:8888/param";
+    var c = new Controls(gui, "image", params, url_server_params);
+
+    var url_web_params = "http://localhost:8888/web_param";
+    var c2 = new Controls(gui, "texte", web_params, url_web_params);
+
 };
