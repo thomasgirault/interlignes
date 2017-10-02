@@ -3,8 +3,10 @@ var defaultText = 'Texter ';
 var params = {
 
     "minFontSize": 8,
-    "maxFontSize": 400
-};
+    "maxFontSize": 400,
+    "clearPeriod": 20,
+    "max_word_ts_interval": 2
+}
 
 
 set_data = function (dico) {
@@ -16,6 +18,8 @@ set_data = function (dico) {
 
 
 function Texter(id) {
+    // ajouter last Timestamp
+
 
     var _this = this;
 
@@ -24,11 +28,11 @@ function Texter(id) {
     this.id = id;
     this.textColor = "#ffffff";
     this.bgColor = "#000000";
-    this.curFontSize = 12;
-    this.varFontSize = 0.4;
+    // this.curFontSize = 12;
+    // this.varFontSize = 0.4;
 
-    this.minFontSize = 8;
-    this.maxFontSize = 400;
+    // this.minFontSize = 8;
+    // this.maxFontSize = 400;
 
     this.angle = 0;
     this.angleDelta = 0;
@@ -37,15 +41,20 @@ function Texter(id) {
     this.tracked_point = [0, 0];
     this.last_tracked_point = [0, 0];
 
-    this.text = "";
+    this.last_draw_time = 0;
+
+    this.text = "    ";
 
     // Drawing Variables
     canvas = null;
     context = null;
 
-    this.initialize = function () {
+    this.initialize = function (point) {
+        _this.tracked_point = point;
+        _this.last_tracked_point = point;
 
-        canvas = document.getElementById('canvas');
+
+        canvas = document.getElementById('interlignes');
         context = canvas.getContext('2d');
         canvas.width = 1920;
         canvas.height = 1080;
@@ -90,6 +99,9 @@ function Texter(id) {
                 _this.last_tracked_point[0] += Math.cos(angle) * stepSize;
                 _this.last_tracked_point[1] += Math.sin(angle) * stepSize;
 
+            } else if (Math.round(new Date().getTime() / 1000) - _this.last_draw_time > params["max_word_ts_interval"]) {
+                finishWord();
+
             }
         }
     };
@@ -102,20 +114,19 @@ function Texter(id) {
         var letter = _this.text[_this.textIndex];
         context.font = fontSize + "px Georgia";
         while (letter != ' ') {
-
-            console.log("Finish word");
             letter_to_context(letter);
+            // console.log("Finish word", _this.id, letter);
 
             _this.textIndex++;
             if (_this.textIndex > _this.text.length - 1) {
-                _this.textIndex = 0;
+                // _this.textIndex = 0;
                 // askNewText();
                 return;
             }
             else {
                 var stepSize = textWidth(letter, fontSize);
-                _this.last_tracked_point[0] += Math.cos(angle) * stepSize;
-                _this.last_tracked_point[1] += Math.sin(angle) * stepSize;
+                _this.last_tracked_point[0] += Math.cos(_this.angle) * stepSize;
+                _this.last_tracked_point[1] += Math.sin(_this.angle) * stepSize;
                 letter = _this.text[_this.textIndex];
                 _this.angle -= _this.angleDelta;
                 _this.angleDelta -= _this.angleDelta / 6;
@@ -148,6 +159,9 @@ function Texter(id) {
         context.rotate(_this.angle + (Math.random() * (_this.angleDistortion * 2) - _this.angleDistortion));
         context.fillText(letter, 0, 0);
         context.restore();
+
+        _this.last_draw_time = Math.round(new Date().getTime() / 1000);
+
     }
 
 
@@ -193,7 +207,7 @@ function Texter(id) {
 
 
     function askNewText() {
-        console.log(_this.id, "asks new text");
+        // console.log(_this.id, "asks new text");
         $.ajax({
             type: "POST",
             url: "http://localhost:8888/paragraphe/" + id,
@@ -201,7 +215,7 @@ function Texter(id) {
             contentType: "application/json; charset=utf-8",
             dataType: "json",
             success: function (data) {
-                console.log(data);
+                // console.log(data);
                 _this.text = data.texte;
             },
             failure: function (errMsg) { alert(errMsg); }
