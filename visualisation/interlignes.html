@@ -33,11 +33,12 @@
 		/* -webkit-user-select: none; */
 		/* cursor: none; */
 
-		/* #canvas {
-			position: relative;
-			opacity: 1.0;
-			 z-index: -1; 
-		} */
+		#interlignes {
+			/* position: relative; */
+			width: 1920px;
+			height: 1080px;
+			 /* z-index: -1;  */
+		}
 
 	</style>
 
@@ -53,8 +54,12 @@
 
 <body>
 	<!-- <canvas id='buffer'></canvas> -->
-	<video id="interlude" autoplay="true" preload = "auto" src="videos/DEUX_POINTS_2_1.mov"></video>
-	<canvas id='canvas'></canvas>
+	<video id="interlude2" preload = "auto" src="videos/slash_hap_.webm"></video>
+		
+	<video id="interlude1" preload = "auto" src="videos/DEUX_POINTS_2_1.mov"></video>
+	<!-- <video id="interlude2" preload = "auto" src="videos/SLASH_4_1.mov"></video> -->
+	
+	<canvas id='interlignes'></canvas>
 	<script type="text/javascript" src="js/main_texter.js"></script>
 	<!-- controls="controls" poster="" -->
 
