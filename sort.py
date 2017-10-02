@@ -199,13 +199,13 @@ class Sort(object):
             dist, indices = self.knn.kneighbors([det])
             idx = indices[0,0]
             d = dist[0,0] 
-            print("knn", d, idx, self.lost_tracker_ids[idx])
+            # print("knn", d, idx, self.lost_tracker_ids[idx])
             if d < self.max_norm:
-                print("knn OK")
+                # print("knn OK")
                 self.lost_tracker_positions.pop(idx)
                 return self.lost_tracker_ids.pop(idx)
-            else:
-                print("knn KO")
+            # else:
+            #     print("knn KO")
             # self.lost_tracker_ids.pop(idx)
             # return self.lost_tracker_ids.pop(0) if len(self.lost_tracker_ids) > 0 else None
         
@@ -217,7 +217,7 @@ class Sort(object):
         self.lost_tracker_ids.append(trk.id)
         last_position = trk.get_state()[0]
         self.lost_tracker_positions.append(last_position)
-        print("LOST WALKER", trk.id)
+        # print("LOST WALKER", trk.id)
 
     def update(self, dets):
         """
@@ -257,7 +257,7 @@ class Sort(object):
 
             trk = KalmanBoxTracker(dets[i, :], t_id=t_id)
             self.max_id = max(self.max_id, trk.id)
-            print("NEW WALKER", trk.id)
+            # print("NEW WALKER", trk.id)
 
             self.trackers.append(trk)
         i = len(self.trackers)
