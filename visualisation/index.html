@@ -4,13 +4,24 @@
   <title>Kinect Streaming</title>
   <script type="text/javascript" src="./node_modules/jquery/dist/jquery.min.js"></script>
   <script type="text/javascript" src="./node_modules/dat.gui/build/dat.gui.min.js"></script>
+  <script type="text/javascript" src="./node_modules/maptastic/build/maptastic.min.js"></script>
   <script type="text/javascript" src="./js/gui.js" charset="utf-8"></script>
 
 
   <style>
-    /* img{
-      transform: scaleX(-1);
-      } */
+    body {
+      background-color: grey;
+      width: 100%;
+      height: 100%;
+      margin: 0px;
+      overflow: hidden;
+    }
+
+    img {
+      position: absolute;
+      left: 308px;
+      height: 1080px;
+    }
   </style>
 
 </head>
@@ -21,14 +32,16 @@
   </div>
 
   <script>
+    // var mapper = Maptastic("main");
+
     var img = document.getElementById('kinect');
     img.src = 'http://localhost:8888/video_feed';
 
     setInterval(function () {
       var img = document.getElementById('kinect');
-      
+
       console.log("img size", img.naturalWidth);
-      if(img.naturalWidth == 0){
+      if (img.naturalWidth == 0) {
         img.src = 'http://localhost:8888/video_feed';
       }
     }, 10000);
