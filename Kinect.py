@@ -22,10 +22,26 @@ class DepthVideo:
     def __init__(self, video_path):
         self.video_path = video_path
         self.cap = cv2.VideoCapture(video_path)
+        self.cap.set(cv2.CAP_PROP_FPS, 5)
         self.frame_counter = 0
         self.gray = None
 
-    def get_frame(self):
+        # self.pos_frame = self.cap.get(cv2.CAP_PROP_POS_FRAMES)
+
+    # def get_frame_slow(self):
+    #     flag, frame = self.cap.read()
+    #     if flag:
+    #         # The frame is ready and already captured
+    #         self.pos_frame = self.cap.get(cv2.CAP_PROP_POS_FRAMES)
+    #         print( str(pos_frame)+" frames")
+    #     else:
+    #         # The next frame is not ready, so we try to read it again
+    #         self.cap.set(cv2.cv.CAP_PROP_POS_FRAMES, pos_frame-1)
+    #         # It is better to wait for a while for the next frame to be ready
+    #         cv2.waitKey(1000)
+
+
+    def get_frame(self, frame_type=None):
         try:
             # if self.gray is not None and ((self.frame_counter%2) == 1):
             #     return self.gray
@@ -39,7 +55,8 @@ class DepthVideo:
                 # If the last frame is reached, reset the capture and the frame_counter
                 self.frame_counter = 0  # Or whatever as long as it is the same as next line
                 self.cap = cv2.VideoCapture(self.video_path)
-                # self.cap.set(cv2.cv.CV_CAP_PROP_POS_FRAMES, 0)
+                self.cap.set(cv2.CAP_PROP_FPS, 5)
+
 
             self.gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             return self.gray
@@ -94,23 +111,26 @@ class Kinect:
                 if need_color_depth_map else None
 
     
-    def get_frame(self):
+    def get_frame(self, frame_type="depth"):
         frames = self.listener.waitForNewFrame()
         depth = frames["depth"]
 
         if self.enable_rgb:
             color = frames["color"]
-            ir = frames["ir"]
-            
+            # ir = frames["ir"]
             self.registration.apply(color, depth, self.undistorted, self.registered,
                                     bigdepth=self.bigdepth, color_depth_map=self.color_depth_map)
 
 
-        # depth_dist = np.array(ir.asarray() / 2, dtype=np.uint8)
-        # depth_array = self.bigdepth.asarray(np.float32)
-        depth_array = depth.asarray(np.float32)
-        depth_dist = np.array(depth_array / self.max_dist, dtype=np.uint8)
+        if frame_type == "depth":
+            depth_array = depth.asarray(np.float32)
+            depth_dist = np.array(depth_array / self.max_dist, dtype=np.uint8)
+        else:    
+            ir = frames["ir"]
+            depth_dist = np.array(ir.asarray(np.float32) / 2, dtype=np.uint8)
+    
         depth_flip = cv2.flip(depth_dist, 1)
+        # depth_array = self.bigdepth.asarray(np.float32)
 
         self.listener.release(frames)
         return depth_flip
