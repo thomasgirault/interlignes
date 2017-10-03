@@ -56,20 +56,22 @@ class Controls {
 }
 
 params = {
-    "display_mode":{ "val": 0, "min": 0, "max": 2 },
-    "depth_ir":{ "val": 0, "min": 0, "max": 1 },
+    "display_mode": { "val": 0, "min": 0, "max": 2 },
+    "depth_ir": { "val": 0, "min": 0, "max": 2 },
     "min_depth": { "val": 0, "min": 0, "max": 255 },
     "max_depth": { "val": 255, "min": 0, "max": 255 },
     "theta": { "val": 0, "min": 0, "max": 255 },
-    "blur":{ "val": 5, "min": 0, "max": 20 },
+    "blur": { "val": 5, "min": 0, "max": 20 },
     "MAX_DIST": { "val": 40, "min": 1, "max": 70 },
-    "min_blob_size": { "val": 30, "min": 1, "max": 300 },
+    "min_blob_size": { "val": 20, "min": 1, "max": 300 },
     "max_blob_size": { "val": 500, "min": 100, "max": 500 },
     "min_norm": { "val": 1, "min": 0, "max": 10 },
     "erode_kernel_size": { "val": 10, "min": 2, "max": 20 },
     "erode_iterations": { "val": 1, "min": 1, "max": 10 },
+    "max_age": { "val": 5, "min": 1, "max": 30 },
+    "min_hits": { "val": 10, "min": 1, "max": 30 },
     "smooth_path": { "val": 0, "min": 0, "max": 10 },
-    "init_texte":{ "val": false, "min": false, "max": true },
+    "init_texte": { "val": false, "min": false, "max": true },
     "extra_spaces": { "val": 1, "min": 0, "max": 20 },
     "save": { "val": false, "min": false, "max": true },
     "learnBG": { "min": null, "max": null }
@@ -79,25 +81,14 @@ var web_params = {
     //  "width_ratio":{"val":800, "min":1920, "max":1920},
     //  "heigth_ratio":{"val":2.55, "min":1, "max":5},
 
-    "minFontSize": { "val": 20, "min": 3, "max": 100 },
-    "maxFontSize": { "val": 100, "min": 30, "max": 300 },
+    "minFontSize": { "val": 10, "min": 3, "max": 100 },
+    "maxFontSize": { "val": 40, "min": 15, "max": 300 },
     "clearPeriod": { "val": 20, "min": 1, "max": 100 },
     "max_word_ts_interval": { "val": 2, "min": 0, "max": 10 },
-    "letter_spaces": { "val": 0, "min": 0, "max": 5 },
+    "kerning": { "val": 0, "min": 0, "max": 100 },
+    "min_distance": { "val": 10, "min": 0, "max": 50 },
     "interlude1": { "val": false, "min": false, "max": true },
     "interlude2": { "val": false, "min": false, "max": true }
-};
-
-
-var mapping_params = {
-    "x0": { "val": 0, "min": -1000, "max": 3000 },
-    "y0": { "val": 0, "min": -1000, "max": 3000 },
-    "x1": { "val": 1920, "min": -1000, "max": 3000 },
-    "y1": { "val": 0, "min": -1000, "max": 3000 },
-    "x2": { "val": 1920, "min": -1000, "max": 3000 },
-    "y2": { "val": 1080, "min": -1000, "max": 3000 },
-    "x3": { "val": 0, "min": -1000, "max": 3000 },
-    "y3": { "val": 1080, "min": -1000, "max": 3000 }
 };
 
 
@@ -112,6 +103,4 @@ window.onload = function () {
     var url_web_params = "/web_param";
     var c2 = new Controls(gui, "texte", web_params, url_web_params);
 
-    var url_mapping = "/mapping";
-    var c3 = new Controls(gui, "mapping", mapping_params, url_mapping);
 };
