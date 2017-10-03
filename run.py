@@ -22,25 +22,27 @@ Config.KEEP_ALIVE = False
 
 
 MAX_DIST = 18750. / 255.
-VARS = {"init":0,
-        "depth_ir":0,
+VARS = {"init": 0,
+        "depth_ir": 1,
         "min_depth": 0,
         "max_depth": 255,
         "theta": 0,
-        "blur":5,
+        "blur": 5,
         "save": 0,
         "last_save": 0,
         "max_age": 5,
         "min_hits": 10,
         "MAX_DIST": MAX_DIST,
-        "min_blob_size": 30,
+        "min_blob_size": 100,
         "max_blob_size": 500,
         "erode_kernel_size": 5,
         "erode_iterations": 1,
+        "max_age": 5,
+        "min_hits": 10,
         "smooth": 0,
         "learnBG": 0,
         "min_norm": 5,
-        "display_mode":0,
+        "display_mode": 0,
         "extra_spaces": 15}
 
 # TODO : Doit être stocké comme un JSON à l'exterieur de l'application en lien avec l'appli JS
@@ -56,8 +58,8 @@ try:
 except Exception as e:
     # video_path = "/home/thomas/Vidéos/interlignes/2017-09-25 19:37:59.avi"
     video_path = "/home/thomas/Vidéos/interlignes/2017-09-30 21:36:10.avi"
-
     kinect = DepthVideo(video_path)
+    VARS["depth_ir"] = 1
 
 sort_tracker = Sort(max_age=5, min_hits=10)
 
@@ -89,32 +91,17 @@ def video_export(depth):
         print(traceback.format_exc())
 
 
-def clean_frame(frame):
-    if VARS["min_depth"] > 0:
-        ret, frame = cv2.threshold(frame, VARS["min_depth"], 255, cv2.THRESH_TOZERO)
-
-    if VARS["max_depth"] < 255:
-        ret, frame = cv2.threshold(
-            frame, VARS["max_depth"], 255, cv2.THRESH_TOZERO_INV)
-
-    ret, frame = cv2.threshold(frame, VARS["theta"], 255, 0)
-    return frame
-
-
 def blob_detection(frame):
     global tracked_points
 
     # http://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_imgproc/py_contours/py_contour_features/py_contour_features.html
     # https://stackoverflow.com/questions/32414559/opencv-contour-minimum-dimension-location-in-python
-    
-
 
     out = frame.copy()
     out = cv2.cvtColor(out, cv2.COLOR_GRAY2BGR)
-    
+
     # out2 = np.zeros((512, 424,3), np.uint8)
     # cv2.add(out, out2)
-
 
     im2, contours, hier = cv2.findContours(
         frame, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -141,9 +128,9 @@ def blob_detection(frame):
             x = int((x2 + x1) / 2)
             y = int((y2 + y1) / 2)
             new_tracked_points[w_id] = [x, y]
-            cv2.circle(out, (x, y), 10, (0, 0, 255), -1)
+            cv2.circle(out, (x, y), 5, (0, 0, 255), -1)
             cv2.putText(out, w_id, (x, y), font, 1,
-                        (255, 255, 0), 2, cv2.LINE_AA)
+                        (255, 255, 0), 1, cv2.LINE_AA)
 
         tracked_points = new_tracked_points
         # if w_id in tracked_points:
@@ -165,64 +152,85 @@ def blob_detection(frame):
     except Exception as e:
         print(e)
         print(traceback.format_exc())
-    return out 
+    return out
+
+
+def clean_frame(frame):
+    if VARS["min_depth"] > 0:
+        ret, frame = cv2.threshold(
+            frame, VARS["min_depth"], 255, cv2.THRESH_TOZERO)
+
+    if VARS["max_depth"] < 255:
+        ret, frame = cv2.threshold(
+            frame, VARS["max_depth"], 255, cv2.THRESH_TOZERO_INV)
+
+    ret, frame = cv2.threshold(frame, VARS["theta"], 255, 0)
+    return frame
+
+
+def improve_shapes(img, bg_substractor, morph_type):
+        # acquisition et sauvegarde d'un masque
+        # http://docs.opencv.org/3.0-beta/doc/py_tutorials/py_imgproc/py_morphological_ops/py_morphological_ops.html
+    mask = bg_substractor.apply(img, learningRate=VARS["learnBG"])
+    kernel = np.ones((VARS["erode_kernel_size"],
+                      VARS["erode_kernel_size"]), np.uint8)
+    mask_dilate = cv2.morphologyEx(
+        mask, morph_type, kernel, VARS["erode_iterations"])
+    img_mask_dilate = cv2.bitwise_and(img, mask_dilate)
+    return img_mask_dilate
 
 
 async def kinect_loop():
     global displayed_frame
-    bg_mask_path = "/home/thomas/dev/Interlignes/interlignes/bg.jpg"
-    bg_mask = cv2.imread(bg_mask_path, cv2.IMREAD_GRAYSCALE)
-    bg_substractor = cv2.createBackgroundSubtractorMOG2(
-        history=1)  # , detectShadows = False
-    mask = bg_substractor.apply(bg_mask, learningRate=1)
+    bg_mask_path = "/home/thomas/dev/Interlignes/interlignes/"
+    bg_depth_mask_path = bg_mask_path + "depth_bg.jpg"
+    bg_ir_mask_path = bg_mask_path + "ir_bg.jpg"
+
+    bg_depth_mask = cv2.imread(bg_depth_mask_path, cv2.IMREAD_GRAYSCALE)
+    bg_depth_substractor = cv2.createBackgroundSubtractorMOG2(history=1)
+    depth_mask = bg_depth_substractor.apply(bg_depth_mask, learningRate=1)
+
+    bg_ir_mask = cv2.imread(bg_ir_mask_path, cv2.IMREAD_GRAYSCALE)
+    bg_ir_substractor = cv2.createBackgroundSubtractorMOG2(history=1)
+    ir_mask = bg_ir_substractor.apply(bg_ir_mask, learningRate=1)
+
     # initialisation avec 100x l'image sauvegardée précédement
 
     while True:
+        depth, ir = kinect.get_frame(get_depth=True, get_ir=True)
         if VARS["depth_ir"] == 0:
-            depth_flip = kinect.get_frame(frame_type="depth")
-        else:
-            depth_flip = kinect.get_frame(frame_type="ir")
+            video_export(depth)
+            shapes = improve_shapes(
+                depth, bg_depth_substractor, cv2.MORPH_OPEN)
+        elif VARS["depth_ir"] == 1:
+            video_export(ir)
             if VARS["blur"] > 0:
-                depth_flip = cv2.blur(depth_flip, (VARS["blur"], VARS["blur"]))
+                ir = cv2.blur(ir, (VARS["blur"], VARS["blur"]))
+            shapes = improve_shapes(ir, bg_ir_substractor, cv2.MORPH_CLOSE)
+        elif VARS["depth_ir"] == 2:
+            if VARS["blur"] > 0:
+                ir = cv2.blur(ir, (VARS["blur"], VARS["blur"]))
+            shapes_ir = improve_shapes(ir, bg_ir_substractor, cv2.MORPH_CLOSE)
+            shapes_depth = improve_shapes(
+                depth, bg_depth_substractor, cv2.MORPH_OPEN)
+            shapes = cv2.bitwise_or(shapes_ir, shapes_depth)
 
-        video_export(depth_flip)
-
-        # acquisition et sauvegarde d'un masque
-        # http://docs.opencv.org/3.0-beta/doc/py_tutorials/py_imgproc/py_morphological_ops/py_morphological_ops.html
-
-        mask = bg_substractor.apply(depth_flip, learningRate=VARS["learnBG"])
-
-        if VARS["depth_ir"] == 0:
-            kernel = np.ones((VARS["erode_kernel_size"],
-                            VARS["erode_kernel_size"]), np.uint8)
-            mask_dilate = cv2.morphologyEx(
-                mask, cv2.MORPH_OPEN, kernel, VARS["erode_iterations"])
-
-            # mask_dilate = cv2.blur(mask_dilate, (5, 5))
-
-            # depth_dilate = cv2.bitwise_and(depth_flip, depth_flip, mask=mask_dilate)
-            depth_dilate = cv2.bitwise_and(depth_flip, mask_dilate)
-
-            cleaned = clean_frame(depth_dilate)
-            blobs = blob_detection(cleaned)
-        else:
-            blobs = blob_detection(mask)
-
-
+        cleaned = clean_frame(shapes)
+        blobs = blob_detection(cleaned)
 
         if VARS["display_mode"] == 0:
             displayed_frame = blobs
         elif VARS["display_mode"] == 1:
-            displayed_frame = depth_flip
+            displayed_frame = depth
         elif VARS["display_mode"] == 2:
-            displayed_frame = cleaned
-
+            displayed_frame = ir
 
         # displayed_frame = np.hstack((depth_flip, blobs))
 
         if VARS["learnBG"] == 1:
             VARS["learnBG"] = 0
-            cv2.imwrite(bg_mask_path, depth_dilate)
+            cv2.imwrite(bg_depth_mask_path, depth)
+            cv2.imwrite(bg_ir_mask_path, ir)
 
         await asyncio.sleep(0)
 
@@ -242,19 +250,17 @@ def create_corpus():
         for l in f:
             l = l.strip()
             if len(l) > 0:
+                print(l)
                 lines.append(l)
     return lines
 
-
-corpus = create_corpus()
-current_paragraph = 0
 
 app = Sanic(__name__)
 CORS(app)
 
 
-@app.route('/video_feed')
-def video_feed(request):
+@app.route('/video_feed', stream=True)
+async def video_feed(request):
     """Video streaming route. Put this in the src attribute of an img tag."""
     return stream(frame_streamer, content_type='multipart/x-mixed-replace; boundary=frame')
 
@@ -276,25 +282,12 @@ def post_webparams(request, name, value):
     return json({"received": True, "name": name, "value": value})
 
 
-mapping = {'id': 'interlignes',
-           'sourcePoints': [[0, 0], [1920, 0], [1920, 1080], [0, 1080]],
-           'targetPoints': [[0, 0], [1920, 0], [1920, 1080], [0, 1080]]}
-
-# mapping_changed = True
-
-@app.route("/mapping/<name>/<value>", methods=['POST', 'OPTIONS'])
-def post_mapping(request, name, value):
-    # global mapping
-    if name[0] == 'x':
-        mapping['targetPoints'][int(name[1])][0] = int(value)
-    else:
-        mapping['targetPoints'][int(name[1])][1] = int(value)
-
-
-    return json({"received": True, "mapping":mapping})
-
-
 # TODO : générer le texte XML directement dans l'appli Web ?
+corpus = create_corpus()
+current_paragraph = 0
+print("corpus", len(corpus))
+
+
 @app.route("/paragraphe/<walker_id>", methods=['POST', 'OPTIONS'])
 def paragraphe(request, walker_id):
     global current_paragraph
@@ -304,30 +297,27 @@ def paragraphe(request, walker_id):
 
     texte = corpus[current_paragraph] + VARS['extra_spaces'] * " "
     current_paragraph += 1
+    # if current_paragraph > 100:
+    #     current_paragraph = 70
     current_paragraph %= len(corpus)
-    return json({"received": True, "walker_id": walker_id, "texte": texte})
+    print("/paragraphe", current_paragraph)
+    return json({"received": True, "walker_id": walker_id, "texte": texte, "paragraphe": current_paragraph})
 
 
 # exponential moving avg : http://damienclarke.me/code/posts/writing-a-better-noise-reducing-analogread
 @app.websocket('/tracker')
 async def tracker(request, ws):
     global new_params
-    
+
     old_mapping = {}
     # global mapping
     while True:
         if tracked_points != {}:
             await ws.send(js.dumps({"walkers": tracked_points}))
-        
+
         if new_params != {}:
             await ws.send(js.dumps({"control": new_params}))
             new_params = {}
-
-        if old_mapping != mapping:
-            await ws.send(js.dumps({"mapping": mapping}))
-            print(mapping)
-            old_mapping = mapping
-            mapping_changed = False
 
         await asyncio.sleep(0)
 
