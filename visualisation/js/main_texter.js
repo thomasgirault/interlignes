@@ -1,53 +1,26 @@
 
+var mapper = Maptastic("interlignes");
 var canvas = document.getElementById('interlignes');
 var context = canvas.getContext('2d');
+//canvas.width = screen.width, canvas.height = screen.width;
+canvas.width = 1920, canvas.height = 1080;
+
+
 
 var native_width = 512, native_height = 424;
+// var width = canvas.width, height = canvas.width;
 var width = 1920, height = 1080;
+
 var height_ratio = (height / native_height);
 var width_ratio = height_ratio;
 var dx = (width - native_width*height_ratio) / 2
 
 
-
-// var configObject = {
-// 	autoSave: false,
-// 	autoLoad: false,
-// 	labels: true,
-// 	layers: ["interlignes"],
-// 	// onchange: _.debounce(myChangeHandler, 500),
-// 	};
-// var mapper = Maptastic(configObject);
-var mapper = Maptastic("interlignes");
-
-
-console.log(mapper.getLayout());
-
 var interlude1 = $("#interlude1")[0];
 var interlude2 = $("#interlude2")[0];
 
-// var bufferCanvas = document.getElementById('buffer');
-// var buffer = bufferCanvas.getContext('2d');
-
-var texters = [];
-var nb_texters = 1;
-var lastIndex = 0;
 
 var texters = {}
-
-// for (i = 0; i < nb_texters; i++) {
-// 	var t = new Texter(i);
-// 	t.initialize();
-// 	texters[i] = t;
-// }
-
-
-// for (i = 0; i < nb_texters; i++) {
-// 	var t = new Texter(i);
-// 	t.initialize();
-// 	texters.push(t);
-// }
-
 
 // https://github.com/joewalnes/reconnecting-websocket
 var tracker = new ReconnectingWebSocket("ws://127.0.0.1:8888/tracker");
@@ -65,14 +38,13 @@ tracker.onmessage = function (event) {
 
 		if ("walkers" in data) {
 			$.each(data.walkers, function (index, value) {
-				// var i = parseInt(index) % nb_texters;
 				var i = parseInt(index);
-				var point = [width_ratio * value[0] + dx, height_ratio * value[1]];
+				var point = [width_ratio * value[0], height_ratio * value[1]];
 				if(!(i in texters)){
 					var t = new Texter(i);
 					t.initialize(point);
 					texters[i] = t;
-					console.log("create new texter", i);					
+					console.log("create new walker", i);					
 				}
 				else
 					texters[i].tracked_point = point;
@@ -86,27 +58,16 @@ tracker.onmessage = function (event) {
 				interlude2.play();
 				draw_video2();
 			}
-		} else if ("mapping" in data) {
-			console.log(data.mapping);
-			// mapper = Maptastic(configObject);
-			mapper.setLayout([data.mapping]);
-
-		}
+		} 
 	}
 };
 
-
-// function write_transparent_video() {
-// 	buffer.drawImage(video, 0, 0, width, height);
-// 	// this can be done without alphaData, except in Firefox which doesn't like it when image is bigger than the canvas
-// 	var image = buffer.getImageData(0, 0, width, height),
-// 		imageData = image.data,
-// 		alphaData = buffer.getImageData(0, height, width, height).data;
-// 	for (var i = 3, len = imageData.length; i < len; i = i + 4) {
-// 		imageData[i] = alphaData[i - 1];
-// 	}
-// 	context.putImageData(image, 0, 0, 0, 0, width, height);
-// }
+$(window).bind('storage', function (e) {
+	// console.log(e.originalEvent.key, e.originalEvent.newValue);
+	var mapping = mapper.getLayout();
+	var new_value =  $.parseJSON(e.originalEvent.newValue);
+	mapper.setLayout(new_value); 
+});
 
 
 var frame = 0;
@@ -119,7 +80,6 @@ function clear() {
 		context.restore();
 	}
 	frame++;
-	// frame %= 20;
 	frame %= params["clearPeriod"];
 }
 
@@ -150,17 +110,3 @@ function draw_video2() {
 
 
 init();
-
-
-// draw_video();
-
-// var gui = new dat.GUI();
-// gui.add(texters[0], 'text').name('Text').onChange(function () { texters[0].onTextChange() });
-// gui.add(texters[0], 'minFontSize', 3, 100).name('Minimum Size');
-// gui.add(texters[0], 'maxFontSize', 3, 400).name('Maximum Size');
-// gui.add(texters[0], 'angleDistortion', 0, 2).step(0.1).name('Random Angle');
-// // gui.addColosr(texter, 'textColor').name( 'Text Color' ).onChange( function(value) { texter.applyNewColor( value ) } );
-// // gui.addColosr(texter, 'bgColor').name( 'Background Color' ).onChange( function(value) { texter.setBackground( value ) } );
-// gui.add(texters[0], 'clear').name('Clear');
-// gui.add(texters[0], 'save').name('Save');
-
