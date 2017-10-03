@@ -41,7 +41,7 @@ class DepthVideo:
     #         cv2.waitKey(1000)
 
 
-    def get_frame(self, frame_type=None):
+    def get_frame(self, get_depth=False, get_ir=False):
         try:
             # if self.gray is not None and ((self.frame_counter%2) == 1):
             #     return self.gray
@@ -55,11 +55,10 @@ class DepthVideo:
                 # If the last frame is reached, reset the capture and the frame_counter
                 self.frame_counter = 0  # Or whatever as long as it is the same as next line
                 self.cap = cv2.VideoCapture(self.video_path)
-                self.cap.set(cv2.CAP_PROP_FPS, 5)
-
+                # self.cap.set(cv2.CAP_PROP_FPS, 5)
 
             self.gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            return self.gray
+            return self.gray, self.gray
         except Exception as e:
             print(e)
 
@@ -111,7 +110,7 @@ class Kinect:
                 if need_color_depth_map else None
 
     
-    def get_frame(self, frame_type="depth"):
+    def get_frame(self, get_depth=False, get_ir=False):
         frames = self.listener.waitForNewFrame()
         depth = frames["depth"]
 
@@ -122,18 +121,25 @@ class Kinect:
                                     bigdepth=self.bigdepth, color_depth_map=self.color_depth_map)
 
 
-        if frame_type == "depth":
+        res = []
+        if get_depth:
             depth_array = depth.asarray(np.float32)
             depth_dist = np.array(depth_array / self.max_dist, dtype=np.uint8)
-        else:    
+            depth_flip = cv2.flip(depth_dist, 1)
+            res.append(depth_flip)
+        if get_ir:    
             ir = frames["ir"]
-            depth_dist = np.array(ir.asarray(np.float32) / 2, dtype=np.uint8)
-    
-        depth_flip = cv2.flip(depth_dist, 1)
+            ir_norm = np.array(ir.asarray(np.float32)/2, dtype=np.uint8)
+            ir_flip = cv2.flip(ir_norm, 1)
+            res.append(ir_flip)
+
         # depth_array = self.bigdepth.asarray(np.float32)
 
-        self.listener.release(frames)
-        return depth_flip
+        self.listener.release(frames)        
+        return res
+
+            
+
 
     def close(self):
         self.device.stop()
