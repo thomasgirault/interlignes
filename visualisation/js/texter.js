@@ -1,11 +1,12 @@
 var defaultText = 'Texter ';
 
 var params = {
-
-    "minFontSize": 8,
-    "maxFontSize": 400,
+    "minFontSize": 10,
+    "maxFontSize": 40,
     "clearPeriod": 20,
-    "max_word_ts_interval": 2
+    "max_word_ts_interval": 2,
+    "min_distance": 15,
+    "kerning":0
 }
 
 
@@ -28,15 +29,9 @@ function Texter(id) {
     this.id = id;
     this.textColor = "#ffffff";
     this.bgColor = "#000000";
-    // this.curFontSize = 12;
-    // this.varFontSize = 0.4;
-
-    // this.minFontSize = 8;
-    // this.maxFontSize = 400;
-
     this.angle = 0;
     this.angleDelta = 0;
-    this.angleDistortion = 0.01;
+    this.angleDistortion = 0.0;
     this.completeWords = true;
     this.tracked_point = [0, 0];
     this.last_tracked_point = [0, 0];
@@ -56,14 +51,11 @@ function Texter(id) {
 
         canvas = document.getElementById('interlignes');
         context = canvas.getContext('2d');
-        canvas.width = 1920;
-        canvas.height = 1080;
         _this.setBackground(_this.bgColor);
         context.fillStyle = _this.textColor;
-        update();
         askNewText();
+        update();
     };
-
 
 
     function update() {
@@ -71,11 +63,40 @@ function Texter(id) {
         draw();
     }
 
-    function draw() {
-        if (_this.tracked_point != _this.last_tracked_point) {
-            var newDistance = dist(_this.tracked_point, _this.last_tracked_point);
+    var letter_to_context = function (letter) {
+        if (letter == undefined) {
+            console.log(_this.id, "undefined", letter, _this.textIndex, _this.text.length, _this.text);
+            return;
+        }
+
+        context.save();
+        context.translate(_this.last_tracked_point[0], _this.last_tracked_point[1]);
+        context.rotate(_this.angle + (Math.random() * (_this.angleDistortion * 2) - _this.angleDistortion));
+        context.fillText(letter, 0, 0);
+        context.restore();
+
+        _this.last_draw_time = Math.round(new Date().getTime() / 1000);
+
+        _this.textIndex++;
+    }
+
+
+
+    var draw = function () {
+
+        var newDistance = dist(_this.tracked_point, _this.last_tracked_point);
+        var now = Math.round(new Date().getTime() / 1000);
+        if (newDistance > params["min_distance"]) {
+            // if (_this.tracked_point != _this.last_tracked_point) {
             var fontSize = calcFontSize(newDistance);
-            var letter = _this.text[_this.textIndex];
+            if (_this.textIndex > _this.text.length - 1) {
+                askNewText();
+            }
+            if (_this.textIndex < _this.text.length){
+                var letter = _this.text[_this.textIndex];
+            } else {
+                console.log("OVERFLOW", letter, _this.textIndex, _this.text.length);
+            }
             var stepSize = textWidth(letter, fontSize);
 
             if (newDistance > stepSize) {
@@ -85,23 +106,15 @@ function Texter(id) {
                     _this.angleDelta = _this.angle + angle;
                 }
                 _this.angle = angle;
-
                 context.font = fontSize + "px Georgia";
-
                 letter_to_context(letter);
-
-                _this.textIndex++;
-                if (_this.textIndex > _this.text.length - 1) {
-                    _this.textIndex = 0;
-                    askNewText();
-                }
-
+                _this.last_draw_time = Math.round(new Date().getTime() / 1000);
                 _this.last_tracked_point[0] += Math.cos(angle) * stepSize;
                 _this.last_tracked_point[1] += Math.sin(angle) * stepSize;
 
-            } else if (Math.round(new Date().getTime() / 1000) - _this.last_draw_time > params["max_word_ts_interval"]) {
+            }
+            else if (now - _this.last_draw_time > params["max_word_ts_interval"]) {
                 finishWord();
-
             }
         }
     };
@@ -113,14 +126,12 @@ function Texter(id) {
         var fontSize = calcFontSize(newDistance);
         var letter = _this.text[_this.textIndex];
         context.font = fontSize + "px Georgia";
-        while (letter != ' ') {
+        while (letter != ' ') { // une boucle for serait + claire
             letter_to_context(letter);
             // console.log("Finish word", _this.id, letter);
-
             _this.textIndex++;
             if (_this.textIndex > _this.text.length - 1) {
-                // _this.textIndex = 0;
-                // askNewText();
+                askNewText();
                 return;
             }
             else {
@@ -141,7 +152,7 @@ function Texter(id) {
     };
 
 
-    function calcFontSize(d) {
+    var calcFontSize = function (d) {
         var fontSize = params["minFontSize"] + d / 2;
         if (fontSize > params["maxFontSize"])
             fontSize = params["maxFontSize"];
@@ -153,17 +164,6 @@ function Texter(id) {
 
     // var fontSize = _this.curFontSize + d * _this.varFontSize;
 
-    function letter_to_context(letter) {
-        context.save();
-        context.translate(_this.last_tracked_point[0], _this.last_tracked_point[1]);
-        context.rotate(_this.angle + (Math.random() * (_this.angleDistortion * 2) - _this.angleDistortion));
-        context.fillText(letter, 0, 0);
-        context.restore();
-
-        _this.last_draw_time = Math.round(new Date().getTime() / 1000);
-
-    }
-
 
 
 
@@ -171,10 +171,10 @@ function Texter(id) {
         context.font = size + "px Georgia";
 
         if (context.fillText) {
-            return context.measureText(string).width;
+            return context.measureText(string).width + params["kerning"];
 
         } else if (context.mozDrawText) {
-            return context.mozMeasureText(string);
+            return context.mozMeasureText(string) + params["kerning"];
 
         }
     };
@@ -192,7 +192,7 @@ function Texter(id) {
 
     this.setBackground = function (value) {
         _this.bgColor = value;
-        canvas.style.backgroundColor = value;
+        // canvas.style.backgroundColor = value;
 
     };
 
@@ -206,17 +206,19 @@ function Texter(id) {
 
 
 
-    function askNewText() {
+    var askNewText = function () {
         // console.log(_this.id, "asks new text");
         $.ajax({
             type: "POST",
+            async: false,
             url: "http://localhost:8888/paragraphe/" + id,
             data: JSON.stringify({ 'id': _this.id }),
             contentType: "application/json; charset=utf-8",
             dataType: "json",
             success: function (data) {
-                // console.log(data);
-                _this.text = data.texte;
+                console.log(data);
+                _this.textIndex = 0;
+                _this.text = data.texte;                
             },
             failure: function (errMsg) { alert(errMsg); }
         });
