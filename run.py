@@ -18,35 +18,13 @@ from sanic.config import Config
 from sanic.exceptions import RequestTimeout
 
 Config.REQUEST_TIMEOUT = 100000
-Config.KEEP_ALIVE = False
+Config.KEEP_ALIVE = True
 
 
-MAX_DIST = 18750. / 255.
-VARS = {"init": 0,
-        "depth_ir": 1,
-        "min_depth": 0,
-        "max_depth": 255,
-        "theta": 0,
-        "blur": 5,
-        "save": 0,
-        "last_save": 0,
-        "max_age": 5,
-        "min_hits": 10,
-        "MAX_DIST": MAX_DIST,
-        "min_blob_size": 20,
-        "max_blob_size": 500,
-        "erode_kernel_size": 5,
-        "erode_iterations": 1,
-        "max_age": 5,
-        "min_hits": 10,
-        "smooth": 0,
-        "learnBG": 0,
-        "min_norm": 5,
-        "display_mode": 0,
-        "extra_spaces": 15}
-
-# TODO : Doit être stocké comme un JSON à l'exterieur de l'application en lien avec l'appli JS
-
+# MAX_DIST = 18750. / 255.
+with open("params.json", "r") as f:
+    VARS = js.load(f)
+    VARS["learnBG"] = 0
 
 font = cv2.FONT_HERSHEY_SIMPLEX
 video_out = None
@@ -294,8 +272,8 @@ print("corpus", len(corpus))
 @app.route("/paragraphe/<walker_id>", methods=['POST', 'OPTIONS'])
 def paragraphe(request, walker_id):
     global current_paragraph
-    if VARS["init"] == 1:
-        VARS["init"] = 0
+    if VARS["init_texte"] == 1:
+        VARS["init_texte"] = 0
         current_paragraph = 0
 
     texte = corpus[current_paragraph] + VARS['extra_spaces'] * " "
@@ -326,6 +304,9 @@ async def tracker(request, ws):
 
 
 app.static('/', './visualisation')
+app.static('/params.json', './params.json')
+app.static('/text_params.json', './text_params.json')
+
 
 
 if __name__ == '__main__':

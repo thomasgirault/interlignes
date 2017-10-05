@@ -9,7 +9,9 @@ class Controls {
         var stp = 1;
         for (var name in params) {
             var p = params[name];
-            if (!p.hasOwnProperty('val'))
+            // if (!p.hasOwnProperty('val'))
+            if (p['val'] == null)
+
                 this.add_button(name);
             else
                 this.add_param(name, p["val"], p["min"], p["max"], stp);
@@ -55,14 +57,27 @@ class Controls {
     }
 }
 
-params = {
+var my_params;
+$.ajax({
+    type: "GET",
+    async: false,
+    url: "http://localhost:8888/params.json",
+    contentType: "application/json; charset=utf-8",
+    dataType: "json",
+    success: function (data) {
+        my_params = data;
+    },
+    failure: function (errMsg) { alert(errMsg); }
+})
+
+var params = {
     "display_mode": { "val": 0, "min": 0, "max": 2 },
     "depth_ir": { "val": 0, "min": 0, "max": 2 },
     "min_depth": { "val": 0, "min": 0, "max": 255 },
     "max_depth": { "val": 255, "min": 0, "max": 255 },
     "theta": { "val": 0, "min": 0, "max": 255 },
     "blur": { "val": 5, "min": 0, "max": 20 },
-    "MAX_DIST": { "val": 40, "min": 1, "max": 70 },
+    "MAX_DIST": { "val": 73, "min": 1, "max": 73 },
     "min_blob_size": { "val": 20, "min": 1, "max": 300 },
     "max_blob_size": { "val": 500, "min": 100, "max": 500 },
     "min_norm": { "val": 1, "min": 0, "max": 10 },
@@ -70,12 +85,37 @@ params = {
     "erode_iterations": { "val": 1, "min": 1, "max": 10 },
     "max_age": { "val": 5, "min": 1, "max": 30 },
     "min_hits": { "val": 10, "min": 1, "max": 30 },
-    "smooth_path": { "val": 0, "min": 0, "max": 10 },
+    "smooth": { "val": 0, "min": 0, "max": 10 },
     "init_texte": { "val": false, "min": false, "max": true },
     "extra_spaces": { "val": 1, "min": 0, "max": 20 },
     "save": { "val": false, "min": false, "max": true },
-    "learnBG": { "min": null, "max": null }
+    "learnBG": { "val": null, "min": null, "max": null }
 };
+
+
+$.ajax({
+    type: "GET",
+    async: false,
+    url: "http://localhost:8888/params.json",
+    contentType: "application/json; charset=utf-8",
+    dataType: "json",
+    success: function (data) {
+        $.each(data, function (key, value) {
+            if(key in params){
+                console.log(key, params[key]);
+                params[key]["val"] = value;
+            }
+        });
+    },
+    failure: function (errMsg) { alert(errMsg); }
+})
+
+
+
+
+
+
+
 
 var web_params = {
     //  "width_ratio":{"val":800, "min":1920, "max":1920},
@@ -96,13 +136,14 @@ window.onload = function () {
 
     gui = new dat.GUI();
     // gui.remember(params);
-   
+    console.log(params);
+
     var url_server_params = "/param";
     var c = new Controls(gui, "image", params, url_server_params);
-    
+
     var url_web_params = "/web_param";
     var c2 = new Controls(gui, "texte", web_params, url_web_params);
-    
+
 };
 
 
