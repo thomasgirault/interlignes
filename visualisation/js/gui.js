@@ -83,7 +83,7 @@ var web_params = {
 
     "minFontSize": { "val": 10, "min": 3, "max": 100 },
     "maxFontSize": { "val": 40, "min": 15, "max": 300 },
-    "clearPeriod": { "val": 20, "min": 1, "max": 100 },
+    "clearPeriod": { "val": 5, "min": 0, "max": 100 },
     "max_word_ts_interval": { "val": 2, "min": 0, "max": 10 },
     "kerning": { "val": 0, "min": 0, "max": 100 },
     "min_distance": { "val": 10, "min": 0, "max": 50 },
@@ -96,11 +96,31 @@ window.onload = function () {
 
     gui = new dat.GUI();
     // gui.remember(params);
-
+   
     var url_server_params = "/param";
     var c = new Controls(gui, "image", params, url_server_params);
-
+    
     var url_web_params = "/web_param";
     var c2 = new Controls(gui, "texte", web_params, url_web_params);
-
+    
 };
+
+
+    // if(typeof(Storage) !== "undefined") {
+    //     // Code for localStorage/sessionStorage.
+    //     console.log( Storage );
+    // } 
+
+//     {
+
+// var gui = new dat.GUI({load:
+    //       "preset": "Default",
+//       "closed": false,
+//       "remembered": {
+//         "Default": {
+//           "0": {"x": 8}
+//         }
+//       },
+//       "folders": {}
+//     }
+//     });
