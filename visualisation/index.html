@@ -16,10 +16,6 @@
       margin: 0px;
       overflow: hidden;
     }
-    /* #interlignes {
-      width: 1449px;
-			height: 1200px;
-    } */
 
     #interlignes {
       width: 1449px;
@@ -54,8 +50,10 @@
 
 
     var mapper = Maptastic("interlignes");
+    // 	onchange: myChangeHandler,
+
     var layout = mapper.getLayout();
-      console.log(layout);
+    console.log(layout);
 
     layout[0]["sourcePoints"] = [[200, 200], [1249, 200], [1249, 880], [200, 880]];
     mapper.setLayout(layout);
