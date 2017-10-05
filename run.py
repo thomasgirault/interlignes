@@ -33,7 +33,7 @@ VARS = {"init": 0,
         "max_age": 5,
         "min_hits": 10,
         "MAX_DIST": MAX_DIST,
-        "min_blob_size": 100,
+        "min_blob_size": 20,
         "max_blob_size": 500,
         "erode_kernel_size": 5,
         "erode_iterations": 1,
@@ -127,8 +127,8 @@ def blob_detection(frame):
             w_id = str(int(walker_id))
             x = int((x2 + x1) / 2)
             y = int((y2 + y1) / 2)
-            new_tracked_points[w_id] = [x, y]
-            cv2.circle(out, (x, y), 5, (0, 0, 255), -1)
+            new_tracked_points[w_id] = [x, y2]
+            cv2.circle(out, (x, int(y2)), 5, (0, 0, 255), -1)
             cv2.putText(out, w_id, (x, y), font, 1,
                         (255, 255, 0), 1, cv2.LINE_AA)
 
@@ -246,7 +246,10 @@ async def frame_streamer(response):
 
 def create_corpus():
     lines = []
-    with open("/home/thomas/dev/Interlignes/tentative.txt", "r") as f:
+    # with open("/home/thomas/dev/Interlignes/tentative.txt", "r") as f:
+    # MERCI
+    with open("/home/thomas/dev/Interlignes/ponctuation.txt", "r") as f:
+
         for l in f:
             l = l.strip()
             if len(l) > 0:
