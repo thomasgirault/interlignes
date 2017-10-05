@@ -16,25 +16,19 @@
       margin: 0px;
       overflow: hidden;
     }
+    /* #interlignes {
+      width: 1449px;
+			height: 1200px;
+    } */
 
     #interlignes {
-      /* position: absolute; */
-      /* height: 1080px; */
-
-      /* width: 652px;
-			height: 540px; */
-      /* left: 616px; */
-      /* left: 308px; */
-
-      
-      width: 1304px;
-			height: 1080px;
-			/* background: green; */
+      width: 1449px;
+      height: 1200px;
     }
 
     #kinect {
       position: absolute;
-      height: 1080px;
+      height: 1200px;
     }
   </style>
 
@@ -46,7 +40,6 @@
   </div>
 
   <script>
-
     var img = document.getElementById('kinect');
     img.src = 'http://localhost:8888/video_feed';
 
@@ -61,14 +54,18 @@
 
 
     var mapper = Maptastic("interlignes");
+    var layout = mapper.getLayout();
+      console.log(layout);
+
+    layout[0]["sourcePoints"] = [[200, 200], [1249, 200], [1249, 880], [200, 880]];
+    mapper.setLayout(layout);
+
 
     $(window).bind('storage', function (e) {
       var mapping = mapper.getLayout();
-      var new_value =  $.parseJSON(e.originalEvent.newValue);
-      mapper.setLayout(new_value); 
+      var new_value = $.parseJSON(e.originalEvent.newValue);
+      mapper.setLayout(new_value);
     });
-
-
   </script>
 </body>
 

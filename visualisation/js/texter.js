@@ -3,7 +3,7 @@ var defaultText = 'Texter ';
 var params = {
     "minFontSize": 10,
     "maxFontSize": 40,
-    "clearPeriod": 20,
+    "clearPeriod": 5,
     "max_word_ts_interval": 2,
     "min_distance": 15,
     "kerning":0

@@ -2,18 +2,16 @@
 var mapper = Maptastic("interlignes");
 var canvas = document.getElementById('interlignes');
 var context = canvas.getContext('2d');
-//canvas.width = screen.width, canvas.height = screen.width;
-canvas.width = 1920, canvas.height = 1080;
 
-
+canvas.width = 1920, canvas.height = 1200;
 
 var native_width = 512, native_height = 424;
-// var width = canvas.width, height = canvas.width;
-var width = 1920, height = 1080;
+var width = 1920, height = 1200;
 
 var height_ratio = (height / native_height);
 var width_ratio = height_ratio;
-var dx = (width - native_width*height_ratio) / 2
+var dx = (width - native_width * height_ratio) / 2
+
 
 
 var interlude1 = $("#interlude1")[0];
@@ -40,11 +38,11 @@ tracker.onmessage = function (event) {
 			$.each(data.walkers, function (index, value) {
 				var i = parseInt(index);
 				var point = [width_ratio * value[0], height_ratio * value[1]];
-				if(!(i in texters)){
+				if (!(i in texters)) {
 					var t = new Texter(i);
 					t.initialize(point);
 					texters[i] = t;
-					console.log("create new walker", i);					
+					console.log("create new walker", i);
 				}
 				else
 					texters[i].tracked_point = point;
@@ -58,26 +56,51 @@ tracker.onmessage = function (event) {
 				interlude2.play();
 				draw_video2();
 			}
-		} 
+		}
 	}
 };
 
 $(window).bind('storage', function (e) {
 	// console.log(e.originalEvent.key, e.originalEvent.newValue);
 	var mapping = mapper.getLayout();
-	var new_value =  $.parseJSON(e.originalEvent.newValue);
-	mapper.setLayout(new_value); 
+	var new_value = $.parseJSON(e.originalEvent.newValue);
+	mapper.setLayout(new_value);
 });
 
 
+// https://stackoverflow.com/questions/45549418/subtract-opacity-instead-of-multiplying
 var frame = 0;
-function clear() {
+function clear_() {
 	if (frame == 0) {
 		context.save();
+		// context.globalCompositeOperation = "darker";
+
+		context.globalAlpha = 0.8;
 		context.fillStyle = 'rgba(0,0,0,0.1)';
 		context.fillRect(0, 0, canvas.width, canvas.height);
 		context.fillStyle = 'rgba(255,255,255,1)';
 		context.restore();
+	}
+	// frame++;
+	// frame %= params["clearPeriod"];
+}
+
+
+function clear() {
+	if (frame == 0) {
+		var img = context.getImageData(0, 0, canvas.width, canvas.height);
+		context.clearRect(0, 0, canvas.width, canvas.height);
+		var px = img.data;
+		for (var i = 0; i < px.length; i += 4) {
+			// var dc = (px[i] > 20 ? 8 : 10);
+			px[i] -= 10;
+			// px[i] = Math.max(0, px[i]);
+			// px[i] = Math.round(px[i] - 1);
+			px[i + 1] = px[i];
+			px[i + 2] = px[i];
+			// px[i+4] -= 1; 
+		}
+		context.putImageData(img, 0, 0);
 	}
 	frame++;
 	frame %= params["clearPeriod"];
