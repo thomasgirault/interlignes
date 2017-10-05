@@ -6,6 +6,9 @@ __pycache__/
 .vscode
 # visualisation/node_modules/*
 *.mov
+*.mp4
+*.webm
+*.jpg
 
 # C extensions
 *.so
