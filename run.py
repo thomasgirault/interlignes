@@ -219,14 +219,14 @@ async def frame_streamer(response):
         f = jpeg.tobytes()
         response.write(
             b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + bytearray(f) + b'\r\n')
-        await asyncio.sleep(0)
+        await asyncio.sleep(0.01)
 
 
-def create_corpus():
+def create_corpus(path):
     lines = []
     # with open("/home/thomas/dev/Interlignes/tentative.txt", "r") as f:
     # MERCI
-    with open("/home/thomas/dev/Interlignes/ponctuation.txt", "r") as f:
+    with open(path, "r") as f:
 
         for l in f:
             l = l.strip()
@@ -263,23 +263,44 @@ def post_webparams(request, name, value):
     return json({"received": True, "name": name, "value": value})
 
 
-# TODO : générer le texte XML directement dans l'appli Web ?
-corpus = create_corpus()
-current_paragraph = 0
-print("corpus", len(corpus))
+@app.route("/save_params", methods=['GET'])
+def save_params(request):
+    with open("last_params.json", "w") as f:
+        js.dump(VARS, f, indent=4)
+    # lien symbolique
+    return json({"received": True})
 
+
+
+# TODO : générer le texte XML directement dans l'appli Web ?
+current_paragraph = 0
+current_main_paragraph = 0
+tentative = create_corpus("/home/thomas/dev/Interlignes/tentative.txt")
+merci = create_corpus("/home/thomas/dev/Interlignes/MERCI2.txt")
+ponctuation = create_corpus("/home/thomas/dev/Interlignes/ponctuation.txt")
+corpus = tentative
+# documents = [ponctuation, tentative, ]
+
+
+
+# entre chaque chapitre, on devient de la ponctuation
+# à la fin du texte, on devient un remerciement
 
 @app.route("/paragraphe/<walker_id>", methods=['POST', 'OPTIONS'])
 def paragraphe(request, walker_id):
-    global current_paragraph
+    global current_paragraph, current_main_paragraph, corpus
     if VARS["init_texte"] == 1:
         VARS["init_texte"] = 0
         current_paragraph = 0
 
+    # if corpus[current_paragraph] in ["I", "II", "III"]:
+    #     corpus = ponctuation
+    #     current_main_paragraph = current_paragraph
+    #     current_paragraph = 0
+
     texte = corpus[current_paragraph] + VARS['extra_spaces'] * " "
     current_paragraph += 1
-    # if current_paragraph > 100:
-    #     current_paragraph = 70
+
     current_paragraph %= len(corpus)
     print("/paragraphe", current_paragraph)
     return json({"received": True, "walker_id": walker_id, "texte": texte, "paragraphe": current_paragraph})
@@ -306,7 +327,6 @@ async def tracker(request, ws):
 app.static('/', './visualisation')
 app.static('/params.json', './params.json')
 app.static('/text_params.json', './text_params.json')
-
 
 
 if __name__ == '__main__':
