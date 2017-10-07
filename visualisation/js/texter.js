@@ -6,7 +6,9 @@ var params = {
     "clearPeriod": 5,
     "max_word_ts_interval": 2,
     "min_distance": 15,
-    "kerning":0
+    "kerning":0,
+    "word_interspaces":0,
+    "sentence_interspaces":0
 }
 
 
@@ -169,12 +171,18 @@ function Texter(id) {
 
     function textWidth(string, size) {
         context.font = size + "px Georgia";
+        
+
+        var space = params["kerning"];
+
+        if(string == ' ')
+            space += params['word_interspaces']
 
         if (context.fillText) {
-            return context.measureText(string).width + params["kerning"];
+            return context.measureText(string).width + space;
 
         } else if (context.mozDrawText) {
-            return context.mozMeasureText(string) + params["kerning"];
+            return context.mozMeasureText(string) + space;
 
         }
     };
@@ -218,7 +226,7 @@ function Texter(id) {
             success: function (data) {
                 console.log(data);
                 _this.textIndex = 0;
-                _this.text = data.texte;                
+                _this.text = data.texte + " ".repeat(params["sentence_interspaces"]);                
             },
             failure: function (errMsg) { alert(errMsg); }
         });
