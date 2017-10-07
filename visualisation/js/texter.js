@@ -8,7 +8,10 @@ var params = {
     "min_distance": 15,
     "kerning":0,
     "word_interspaces":0,
-    "sentence_interspaces":0
+    "sentence_interspaces":0,
+    "textColor" : "#ffffff",
+    "interlude":0,
+    "max_interludes":5
 }
 
 
@@ -54,7 +57,7 @@ function Texter(id) {
         canvas = document.getElementById('interlignes');
         context = canvas.getContext('2d');
         _this.setBackground(_this.bgColor);
-        context.fillStyle = _this.textColor;
+        context.fillStyle = params["textColor"] ;//_this.textColor;
         askNewText();
         update();
     };
@@ -72,6 +75,7 @@ function Texter(id) {
         }
 
         context.save();
+        context.fillStyle = params["textColor"];
         context.translate(_this.last_tracked_point[0], _this.last_tracked_point[1]);
         context.rotate(_this.angle + (Math.random() * (_this.angleDistortion * 2) - _this.angleDistortion));
         context.fillText(letter, 0, 0);

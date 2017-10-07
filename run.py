@@ -278,38 +278,45 @@ current_ponctuation_paragraph = 0
 tentative = create_corpus("/home/thomas/dev/Interlignes/tentative.txt")
 merci = create_corpus("/home/thomas/dev/Interlignes/MERCI2.txt")
 ponctuation = create_corpus("/home/thomas/dev/Interlignes/ponctuation.txt")
-corpus = tentative + ponctuation + merci
+corpus = ponctuation + tentative + ponctuation + merci + ponctuation
 
-# entre chaque chapitre, on devient de la ponctuation
-# à la fin du texte, on devient un remerciement
 
 @app.route("/paragraphe/<walker_id>", methods=['POST', 'OPTIONS'])
 def paragraphe(request, walker_id):
-    global current_paragraph, current_ponctuation_paragraph
+    global current_paragraph, current_ponctuation_paragraph, new_params, VARS
 
     if VARS["init_texte"] == 1:
         VARS["init_texte"] = 0
         current_paragraph = 0
         current_ponctuation_paragraph = 0
 
-    if VARS["ponctuation_proba"] > np.random.random() * 100:
-        texte = ponctuation[current_ponctuation_paragraph] + VARS['extra_spaces'] * " "
+    if VARS["anniversaire"] > 0:
+        texte = "Joyeux anniversaire Stéphanie !        Joyeux anniversaire Stéphanie !        Joyeux anniversaire Stéphanie !"
+        VARS["anniversaire"] -= 1
+
+    elif VARS["ponctuation_proba"] > np.random.random() * 100:
+        texte = ponctuation[current_ponctuation_paragraph]
         current_ponctuation_paragraph += 1
         current_ponctuation_paragraph %= len(ponctuation)
     else:
         texte = corpus[current_paragraph] + VARS['extra_spaces'] * " "
         current_paragraph += 1
-        current_paragraph %= len(corpus)
+        if current_paragraph > len(corpus) - 1:
+            current_paragraph = 0
+            if VARS["video_ok"] in [1, True]:
+                new_params["interlude_play"] = 1
 
     print("/paragraphe", current_paragraph)
     return json({"received": True, "walker_id": walker_id, "texte": texte, "paragraphe": current_paragraph})
 
-        # if corpus[current_paragraph] in ["I", "II", "III"]:
-        #     corpus = ponctuation
-        #     current_main_paragraph = current_paragraph
-        #     current_paragraph = 0
+    # if corpus[current_paragraph] in ["I", "II", "III"]:
+    #     corpus = ponctuation
+    #     current_main_paragraph = current_paragraph
+    #     current_paragraph = 0
 
 # exponential moving avg : http://damienclarke.me/code/posts/writing-a-better-noise-reducing-analogread
+
+
 @app.websocket('/tracker')
 async def tracker(request, ws):
     global new_params

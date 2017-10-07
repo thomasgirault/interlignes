@@ -2,7 +2,7 @@
 var mapper = Maptastic("interlignes");
 var canvas = document.getElementById('interlignes');
 var context = canvas.getContext('2d');
-var video = $("#interlude0")[0];
+var video = $("#interlude2")[0];
 var video_play = false;
 
 canvas.width = 1920, canvas.height = 1200;
@@ -15,16 +15,11 @@ var width_ratio = height_ratio;
 // var dx = (width - native_width * height_ratio) / 2
 
 
-
-// var interlude1 = $("#interlude1")[0];
-// var interlude2 = $("#interlude2")[0];
-
-
 var texters = {}
 
 // https://github.com/joewalnes/reconnecting-websocket
-var tracker = new ReconnectingWebSocket("ws://127.0.0.1:8888/tracker");
 // WebSocket
+var tracker = new ReconnectingWebSocket("ws://127.0.0.1:8888/tracker");
 
 tracker.onopen = function (e) {
 	console.log("WebSocketClient connected:", e);
@@ -52,15 +47,17 @@ tracker.onmessage = function (event) {
 		} else if ("control" in data) {
 			set_data(data.control);
 			if ("interlude" in data.control) {
-				var video_name = '#interlude' + String(data.control["interlude"]);
-				// video = document.getElementById(video_name);
-				video = $(video_name)[0];
-
+				params["interlude"] = data.control["interlude"];				
 			} else if ("interlude_play" in data.control) {
 				console.log("interlude_play");
+				var video_name = '#interlude' + String(params["interlude"]);
+				video = $(video_name)[0];
+				params["textColor"] = "#000000";
 				video.pause();
 				video_play = true;
 				video.play();
+				params["interlude"] += 1;
+				params["interlude"] %= params["max_interludes"];
 			}
 
 		}
@@ -77,39 +74,17 @@ $(window).bind('storage', function (e) {
 
 // https://stackoverflow.com/questions/45549418/subtract-opacity-instead-of-multiplying
 var frame = 0;
-function clear_() {
-	if (frame == 0) {
-		context.save();
-		// context.globalCompositeOperation = "darker";
-
-		context.globalAlpha = 0.8;
-		context.fillStyle = 'rgba(0,0,0,0.1)';
-		context.fillRect(0, 0, canvas.width, canvas.height);
-		context.fillStyle = 'rgba(255,255,255,1)';
-		context.restore();
-	}
-	// frame++;
-	// frame %= params["clearPeriod"];
-}
-
-
-function play_video(){
-	console.log("video", video_play);
-	if (video_play) {
-		//video.play();
-		if (video.paused || video.ended) {
-			console.log("video stop", video_play);
-			video.pause();
-			//video_play = false;
-			// return;
-		}
-		context.clearRect(0, 0, canvas.width, canvas.height);
-		context.drawImage(video, 0, 0, width, height);
-	}
-}
 
 function draw() {
-	if (frame == 0) {
+	if (video_play) {
+		if (video.paused || video.ended) {
+			video.pause();
+			video_play = false;
+			params["textColor"] = "#FFFFFF";
+		}
+		context.clearRect(0, 0, canvas.width, canvas.height);
+		context.drawImage(video, 0, 0, width * 0.8, height * 0.8);
+	} else if (frame == 0) {
 		var img = context.getImageData(0, 0, canvas.width, canvas.height);
 		context.clearRect(0, 0, canvas.width, canvas.height);
 		var px = img.data;
@@ -126,6 +101,22 @@ function draw() {
 }
 
 draw();
+
+// function clear_() {
+	// 	if (frame == 0) {
+	// 		context.save();
+	// 		// context.globalCompositeOperation = "darker";
+
+	// 		context.globalAlpha = 0.8;
+	// 		context.fillStyle = 'rgba(0,0,0,0.1)';
+	// 		context.fillRect(0, 0, canvas.width, canvas.height);
+	// 		context.fillStyle = 'rgba(255,255,255,1)';
+	// 		context.restore();
+	// 	}
+	// 	// frame++;
+	// 	// frame %= params["clearPeriod"];
+	// }
+
 
 // function init() {
 // 	draw();

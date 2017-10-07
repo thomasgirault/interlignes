@@ -59,6 +59,7 @@ class Controls {
 
 
 var params = {
+
     "display_mode": { "val": 0, "min": 0, "max": 2 },
     "depth_ir": { "val": 0, "min": 0, "max": 2 },
     "min_depth": { "val": 0, "min": 0, "max": 255 },
@@ -73,10 +74,12 @@ var params = {
     "erode_iterations": { "val": 1, "min": 1, "max": 10 },
     "max_age": { "val": 5, "min": 1, "max": 30 },
     "min_hits": { "val": 10, "min": 1, "max": 30 },
+    "anniversaire": { "val": 0, "min": 0, "max": 43 },
     "smooth": { "val": 0, "min": 0, "max": 10 },
     "init_texte": { "val": false, "min": false, "max": true },
     "extra_spaces": { "val": 1, "min": 0, "max": 20 },
-    "ponctuation_proba" : {"val":0, "min":0, "max":100},
+    "ponctuation_proba": { "val": 0, "min": 0, "max": 100 },
+    "video_ok": { "val": true, "min": false, "max": true },
     "save": { "val": false, "min": false, "max": true },
     "learnBG": { "val": null, "min": null, "max": null }
 };
@@ -90,10 +93,10 @@ var web_params = {
     "clearPeriod": { "val": 5, "min": 0, "max": 100 },
     "max_word_ts_interval": { "val": 2, "min": 0, "max": 10 },
     "kerning": { "val": 0, "min": 0, "max": 100 },
-    "word_interspaces":{"val": 2, "min": 0, "max": 10},
-    "sentence_interspaces":{"val": 10, "min": 0, "max": 40},
+    "word_interspaces": { "val": 2, "min": 0, "max": 10 },
+    "sentence_interspaces": { "val": 10, "min": 0, "max": 40 },
     "min_distance": { "val": 10, "min": 0, "max": 50 },
-    "interlude": { "val": 0, "min": 0, "max": 16 },
+    "interlude": { "val": 0, "min": 0, "max": 4 },
     "interlude_play": { "val": false, "min": false, "max": true }
 };
 
@@ -109,7 +112,7 @@ $.ajax({
     dataType: "json",
     success: function (data) {
         $.each(data, function (key, value) {
-            if(key in params){
+            if (key in params) {
                 console.log(key, params[key]);
                 params[key]["val"] = value;
             }
@@ -128,7 +131,7 @@ $.ajax({
     dataType: "json",
     success: function (data) {
         $.each(data, function (key, value) {
-            if(key in params){
+            if (key in params) {
                 console.log(key, params[key]);
                 web_params[key]["val"] = value;
             }
@@ -140,21 +143,21 @@ $.ajax({
 
 
 
-function save_all(gui){
-        var obj = {
-            save_params:
-            function () {
-                $.ajax({
-                    type: "GET",
-                    url: "/save_params",
-                    contentType: "application/json; charset=utf-8",
-                    dataType: "json",
-                    success: function (data) { console.log(data); },
-                    failure: function (errMsg) { alert(errMsg); }
-                });
-            }
-        };
-        gui.add(obj, "save_params");
+function save_all(gui) {
+    var obj = {
+        save_params:
+        function () {
+            $.ajax({
+                type: "GET",
+                url: "/save_params",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (data) { console.log(data); },
+                failure: function (errMsg) { alert(errMsg); }
+            });
+        }
+    };
+    gui.add(obj, "save_params");
 
 }
 
