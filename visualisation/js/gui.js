@@ -57,18 +57,6 @@ class Controls {
     }
 }
 
-var my_params;
-$.ajax({
-    type: "GET",
-    async: false,
-    url: "http://localhost:8888/params.json",
-    contentType: "application/json; charset=utf-8",
-    dataType: "json",
-    success: function (data) {
-        my_params = data;
-    },
-    failure: function (errMsg) { alert(errMsg); }
-})
 
 var params = {
     "display_mode": { "val": 0, "min": 0, "max": 2 },
@@ -88,6 +76,7 @@ var params = {
     "smooth": { "val": 0, "min": 0, "max": 10 },
     "init_texte": { "val": false, "min": false, "max": true },
     "extra_spaces": { "val": 1, "min": 0, "max": 20 },
+    "ponctuation_proba" : {"val":0, "min":0, "max":100},
     "save": { "val": false, "min": false, "max": true },
     "learnBG": { "val": null, "min": null, "max": null }
 };
@@ -101,6 +90,8 @@ var web_params = {
     "clearPeriod": { "val": 5, "min": 0, "max": 100 },
     "max_word_ts_interval": { "val": 2, "min": 0, "max": 10 },
     "kerning": { "val": 0, "min": 0, "max": 100 },
+    "word_interspaces":{"val": 2, "min": 0, "max": 10},
+    "sentence_interspaces":{"val": 10, "min": 0, "max": 40},
     "min_distance": { "val": 10, "min": 0, "max": 50 },
     "interlude": { "val": 0, "min": 0, "max": 16 },
     "interlude_play": { "val": false, "min": false, "max": true }
