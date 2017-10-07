@@ -18,5 +18,6 @@
     "learnBG": 0,
     "min_norm": 5,
     "display_mode": 0,
-    "extra_spaces": 14
+    "extra_spaces": 14,
+    "ponctuation_proba":0
 }
