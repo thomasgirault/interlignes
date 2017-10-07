@@ -2,6 +2,8 @@
 var mapper = Maptastic("interlignes");
 var canvas = document.getElementById('interlignes');
 var context = canvas.getContext('2d');
+var video = $("#interlude0")[0];
+var video_play = false;
 
 canvas.width = 1920, canvas.height = 1200;
 
@@ -10,12 +12,12 @@ var width = 1920, height = 1200;
 
 var height_ratio = (height / native_height);
 var width_ratio = height_ratio;
-var dx = (width - native_width * height_ratio) / 2
+// var dx = (width - native_width * height_ratio) / 2
 
 
 
-var interlude1 = $("#interlude1")[0];
-var interlude2 = $("#interlude2")[0];
+// var interlude1 = $("#interlude1")[0];
+// var interlude2 = $("#interlude2")[0];
 
 
 var texters = {}
@@ -49,13 +51,18 @@ tracker.onmessage = function (event) {
 			});
 		} else if ("control" in data) {
 			set_data(data.control);
-			if ("interlude1" in data.control) {
-				interlude1.play();
-				draw_video1();
-			} else if ("interlude2" in data.control) {
-				interlude2.play();
-				draw_video2();
+			if ("interlude" in data.control) {
+				var video_name = '#interlude' + String(data.control["interlude"]);
+				// video = document.getElementById(video_name);
+				video = $(video_name)[0];
+
+			} else if ("interlude_play" in data.control) {
+				console.log("interlude_play");
+				video.pause();
+				video_play = true;
+				video.play();
 			}
+
 		}
 	}
 };
@@ -86,50 +93,64 @@ function clear_() {
 }
 
 
-function clear() {
+function play_video(){
+	console.log("video", video_play);
+	if (video_play) {
+		//video.play();
+		if (video.paused || video.ended) {
+			console.log("video stop", video_play);
+			video.pause();
+			//video_play = false;
+			// return;
+		}
+		context.clearRect(0, 0, canvas.width, canvas.height);
+		context.drawImage(video, 0, 0, width, height);
+	}
+}
+
+function draw() {
 	if (frame == 0) {
 		var img = context.getImageData(0, 0, canvas.width, canvas.height);
 		context.clearRect(0, 0, canvas.width, canvas.height);
 		var px = img.data;
 		for (var i = 0; i < px.length; i += 4) {
-			// var dc = (px[i] > 20 ? 8 : 10);
 			px[i] -= 10;
-			// px[i] = Math.max(0, px[i]);
-			// px[i] = Math.round(px[i] - 1);
 			px[i + 1] = px[i];
 			px[i + 2] = px[i];
-			// px[i+4] -= 1; 
 		}
 		context.putImageData(img, 0, 0);
 	}
 	frame++;
 	frame %= params["clearPeriod"];
+	requestAnimationFrame(draw);
 }
 
-function init() {
-	clear();
-	raf = window.requestAnimationFrame(init);
-}
+draw();
+
+// function init() {
+// 	draw();
+// 	raf = window.requestAnimationFrame(init);
+// }
+// init();
 
 // video.addEventListener("play", draw_video, false);
-function draw_video1() {
-	if (interlude1.paused || interlude1.ended) {
-		return;
-	}
-	// processFrame();
-	context.drawImage(interlude1, 0, 0, width, height);
-	requestAnimationFrame(draw_video1);
-}
-
-function draw_video2() {
-	if (interlude2.paused || interlude2.ended) {
-		return;
-	}
-	// processFrame();
-	context.drawImage(interlude2, 0, 0, width, height);
-	requestAnimationFrame(draw_video2);
-}
+// function draw_video() {
+// 	if (video.paused || video.ended) {
+// 		return;
+// 	}
+// 	context.drawImage(video, 0, 0, width, height);
+// 	requestAnimationFrame(draw_video);
+// }
 
 
+// function draw_video2() {
+// 	if (interlude2.paused || interlude2.ended) {
+// 		return;
+// 	}
+// 	// processFrame();
+// 	context.drawImage(interlude2, 0, 0, width, height);
+// 	requestAnimationFrame(draw_video2);
+// }
 
-init();
+
+
