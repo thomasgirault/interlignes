@@ -223,7 +223,9 @@ function Texter(id) {
         $.ajax({
             type: "POST",
             async: false,
-            url: "http://localhost:8888/paragraphe/" + id,
+            // url: "http://localhost:8888/paragraphe/" + id,
+            url: "./paragraphe/" + id,
+
             data: JSON.stringify({ 'id': _this.id }),
             contentType: "application/json; charset=utf-8",
             dataType: "json",

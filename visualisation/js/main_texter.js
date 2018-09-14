@@ -19,7 +19,15 @@ var texters = {}
 
 // https://github.com/joewalnes/reconnecting-websocket
 // WebSocket
-var tracker = new ReconnectingWebSocket("ws://127.0.0.1:8888/tracker");
+// var tracker = new ReconnectingWebSocket("ws://127.0.0.1:8888/tracker");
+
+var loc = window.location, new_uri;
+var new_uri = "ws://" + loc.host;
+
+// var new_uri = "ws://127.0.0.1:8888";
+var tracker = new ReconnectingWebSocket(new_uri + "/tracker");
+
+
 
 tracker.onopen = function (e) {
 	console.log("WebSocketClient connected:", e);
@@ -31,7 +39,7 @@ tracker.onmessage = function (event) {
 	if (typeof event.data === 'string' || event.data instanceof String) {
 		var data = $.parseJSON(event.data);
 
-		if ("walkers" in data) {
+		if (!video_play && "walkers" in data) {
 			$.each(data.walkers, function (index, value) {
 				var i = parseInt(index);
 				var point = [width_ratio * value[0], height_ratio * value[1]];
@@ -47,7 +55,7 @@ tracker.onmessage = function (event) {
 		} else if ("control" in data) {
 			set_data(data.control);
 			if ("interlude" in data.control) {
-				params["interlude"] = data.control["interlude"];				
+				params["interlude"] = data.control["interlude"];
 			} else if ("interlude_play" in data.control) {
 				console.log("interlude_play");
 				var video_name = '#interlude' + String(params["interlude"]);
@@ -84,6 +92,8 @@ function draw() {
 		}
 		context.clearRect(0, 0, canvas.width, canvas.height);
 		context.drawImage(video, 0, 0, width * 0.8, height * 0.8);
+		// context.drawImage(video, 0, 0, width, height);
+
 	} else if (frame == 0) {
 		var img = context.getImageData(0, 0, canvas.width, canvas.height);
 		context.clearRect(0, 0, canvas.width, canvas.height);
