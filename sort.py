@@ -42,7 +42,7 @@ def iou(bb_test, bb_gt):
               + (bb_gt[2] - bb_gt[0]) * (bb_gt[3] - bb_gt[1]) - wh)
     return(o)
 
-
+@jit
 def convert_bbox_to_z(bbox):
     """
     Takes a bounding box in the form [x1,y1,x2,y2] and returns z in the form
@@ -57,7 +57,7 @@ def convert_bbox_to_z(bbox):
     r = w / float(h)
     return np.array([x, y, s, r]).reshape((4, 1))
 
-
+@jit
 def convert_x_to_bbox(x, score=None):
     """
     Takes a bounding box in the centre form [x,y,s,r] and returns it in the form

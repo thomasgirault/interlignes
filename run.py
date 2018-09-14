@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import bgs
 import sys
 from datetime import datetime
 import traceback
@@ -8,7 +9,8 @@ import asyncio
 from signal import signal, SIGINT
 import json as js
 
-from Kinect import Kinect, DepthVideo
+from video import Kinect, DepthVideo, VideoRecorder, Webcam
+from Tracker import *
 from sort import Sort
 
 from sanic import Sanic, response
@@ -17,59 +19,41 @@ from sanic.response import text, json, stream
 from sanic.config import Config
 from sanic.exceptions import RequestTimeout
 
+from conf import VARS
+
+
 Config.REQUEST_TIMEOUT = 100000
 Config.KEEP_ALIVE = True
 
 
 # MAX_DIST = 18750. / 255.
-with open("params.json", "r") as f:
-    VARS = js.load(f)
-    VARS["learnBG"] = 0
+# with open("params.json", "r") as f:
+#     VARS = js.load(f)
+#     VARS["learnBG"] = 0
 
 font = cv2.FONT_HERSHEY_SIMPLEX
 video_out = None
 displayed_frame = None
 tracked_points = {}
 
+
 try:
     kinect = Kinect()
 except Exception as e:
-    # video_path = "/home/thomas/Vidéos/interlignes/2017-09-25 19:37:59.avi"
-    video_path = "/home/thomas/Vidéos/interlignes/2017-09-30 21:36:10.avi"
-    kinect = DepthVideo(video_path)
+    print("KINECT NOT FOUND")
+
+    # video_path = "/home/thomas/Vidéos/interlignes/2017-09-30\ 21:36:10.avi"
+    # video_path = "/home/thomas/Vidéos/interlignes/2017-09-30 21:20:04.avi"
+    video_path = "/home/thomas/Vidéos/interlignes/2017-09-25 19:37:59.avi"
+    # video_path = 1
+    # kinect = DepthVideo(video_path)
+    kinect = Webcam(1)
     VARS["depth_ir"] = 1
 
 sort_tracker = Sort(max_age=5, min_hits=10)
 
 
-def video_export(depth):
-    global video_out
-
-    try:
-        if VARS['save'] == 1 and VARS['last_save'] == 0:
-            print("saving video")
-            now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            fps = 25
-            w, h = 512, 424
-            codec = cv2.VideoWriter_fourcc(*'MJPG')
-            filename = f"/home/thomas/Vidéos/interlignes/{now}.avi"
-            video_out = cv2.VideoWriter(filename, codec, fps, (w, h))
-            VARS['last_save'] = 1
-
-        if VARS['save'] == 1 and VARS['last_save'] == 1:
-            color = cv2.cvtColor(depth, cv2.COLOR_GRAY2BGR)
-            video_out.write(color)
-        elif video_out != None and VARS['save'] == 0 and VARS['last_save'] == 1:
-            VARS['last_save'] = 0
-            video_out.release()
-            video_out = None
-
-    except Exception as e:
-        print(e)
-        print(traceback.format_exc())
-
-
-def blob_detection(frame):
+def blob_detection(frame, min_blob_size=VARS["min_blob_size"],  max_blob_size=VARS["max_blob_size"]):
     global tracked_points
 
     # http://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_imgproc/py_contours/py_contour_features/py_contour_features.html
@@ -82,7 +66,9 @@ def blob_detection(frame):
     # cv2.add(out, out2)
 
     im2, contours, hier = cv2.findContours(
-        frame, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        frame, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    # frame, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     # cv2.RETR_CCOMP,cv2.CHAIN_APPROX_SIMPLE
 
     rects = []
@@ -91,7 +77,7 @@ def blob_detection(frame):
         # compute the bounding box for the contour
         (x, y, w, h) = cv2.boundingRect(cnt)
         # reject contours outside size range
-        if w > VARS["max_blob_size"] or w < VARS["min_blob_size"] or h > VARS["max_blob_size"] or h < VARS["min_blob_size"]:
+        if w > max_blob_size or w < min_blob_size or h > max_blob_size or h < min_blob_size:
             continue
         rects.append((x, y, w, h))
         detections.append((x, y, x + w, y + h, 1))
@@ -111,21 +97,6 @@ def blob_detection(frame):
                         (255, 255, 0), 1, cv2.LINE_AA)
 
         tracked_points = new_tracked_points
-        # if w_id in tracked_points:
-        # vérifier les distances entre les précédents et les nouveaux
-        # pour n'envoyer que les points qui ont bougé
-        # x0 = tracked_points[w_id][0]
-        # y0 = tracked_points[w_id][1]
-        # d =  np.sqrt((x-x0)**2 + (y-y0)**2)
-        # if d < VARS['min_norm']:
-        #     continue
-
-        # x += (x - x0) * VARS['smooth'] / 10
-        # y += (y - y0) * VARS['smooth'] / 10
-        # new_tracked_points[w_id] = {"x":x, "y":y}
-        # new_tracked_points.append({"tracker":w_id, "x":x, "y":y})
-
-        # TODO : vérifier si 'il y a des marcheurs nouveaux ou disparus
 
     except Exception as e:
         print(e)
@@ -133,105 +104,78 @@ def blob_detection(frame):
     return out
 
 
-def clean_frame(frame):
-    if VARS["min_depth"] > 0:
-        ret, frame = cv2.threshold(
-            frame, VARS["min_depth"], 255, cv2.THRESH_TOZERO)
-
-    if VARS["max_depth"] < 255:
-        ret, frame = cv2.threshold(
-            frame, VARS["max_depth"], 255, cv2.THRESH_TOZERO_INV)
-
-    ret, frame = cv2.threshold(frame, VARS["theta"], 255, 0)
-    return frame
-
-
-def improve_shapes(img, bg_substractor, morph_type):
-        # acquisition et sauvegarde d'un masque
-        # http://docs.opencv.org/3.0-beta/doc/py_tutorials/py_imgproc/py_morphological_ops/py_morphological_ops.html
-    mask = bg_substractor.apply(img, learningRate=VARS["learnBG"])
-    kernel = np.ones((VARS["erode_kernel_size"],
-                      VARS["erode_kernel_size"]), np.uint8)
-    mask_dilate = cv2.morphologyEx(
-        mask, morph_type, kernel, VARS["erode_iterations"])
-    img_mask_dilate = cv2.bitwise_and(img, mask_dilate)
-    return img_mask_dilate
-
-
 async def kinect_loop():
     global displayed_frame
-    bg_mask_path = "/home/thomas/dev/Interlignes/interlignes/"
-    bg_depth_mask_path = bg_mask_path + "depth_bg.jpg"
-    bg_ir_mask_path = bg_mask_path + "ir_bg.jpg"
 
-    bg_depth_mask = cv2.imread(bg_depth_mask_path, cv2.IMREAD_GRAYSCALE)
-    bg_depth_substractor = cv2.createBackgroundSubtractorMOG2(history=1)
-    depth_mask = bg_depth_substractor.apply(bg_depth_mask, learningRate=1)
-
-    bg_ir_mask = cv2.imread(bg_ir_mask_path, cv2.IMREAD_GRAYSCALE)
-    bg_ir_substractor = cv2.createBackgroundSubtractorMOG2(history=1)
-    ir_mask = bg_ir_substractor.apply(bg_ir_mask, learningRate=1)
-
+    bgs_depth = BGSubstractor('depth_mask')
+    bgs_ir = BGSubstractor('depth_ir')
+    vr = VideoRecorder()
     # initialisation avec 100x l'image sauvegardée précédement
 
     while True:
-        depth, ir = kinect.get_frame(get_depth=True, get_ir=True)
-        if VARS["depth_ir"] == 0:
-            video_export(depth)
-            shapes = improve_shapes(
-                depth, bg_depth_substractor, cv2.MORPH_OPEN)
-        elif VARS["depth_ir"] == 1:
-            video_export(ir)
-            if VARS["blur"] > 0:
-                ir = cv2.blur(ir, (VARS["blur"], VARS["blur"]))
-            shapes = improve_shapes(ir, bg_ir_substractor, cv2.MORPH_CLOSE)
-        elif VARS["depth_ir"] == 2:
-            if VARS["blur"] > 0:
-                ir = cv2.blur(ir, (VARS["blur"], VARS["blur"]))
-            shapes_ir = improve_shapes(ir, bg_ir_substractor, cv2.MORPH_CLOSE)
-            shapes_depth = improve_shapes(
-                depth, bg_depth_substractor, cv2.MORPH_OPEN)
-            shapes = cv2.bitwise_or(shapes_ir, shapes_depth)
+        if VARS['save'] and not VARS['last_save']:
+            vr.start_recording()
+        elif not VARS['save'] and VARS['last_save']:
+            vr.stop_recording()
 
-        cleaned = clean_frame(shapes)
-        blobs = blob_detection(cleaned)
+        depth, ir = kinect.get_frame(get_depth=True, get_ir=True)
+        shapes = []
+
+        if VARS["learnBG"] == 1 or not bgs_depth.init or not bgs_ir.init:
+            VARS["learnBG"] = 0
+            bgs_depth.save(depth)
+            bgs_ir.save(ir)
+
+        if (VARS["depth_ir"] % 2) == 0:  # 0,2
+            frame_depth = Frame(depth)
+            frame_depth.threshold()
+            depth_masked = bgs_depth.apply(frame_depth.frame)
+            ir_cleaned = frame_depth.clean(depth_masked)
+            shapes.append(depth_masked)
+
+        if VARS["depth_ir"] > 0:  # 1,2
+            frame_ir = Frame(ir)
+            frame_ir.blur()
+            ir_masked = bgs_ir.apply(frame_ir.frame)
+            ir_cleaned = frame_ir.clean(ir_masked)
+            shapes.append(ir_cleaned)
+
+        if VARS["depth_ir"] == 2:
+            shapes = cv2.bitwise_or(shapes[0], shapes[1])
+
+        blobs = blob_detection(shapes[0])
 
         if VARS["display_mode"] == 0:
             displayed_frame = blobs
         elif VARS["display_mode"] == 1:
             displayed_frame = depth
+            if vr.recording:
+                vr.record(depth)
         elif VARS["display_mode"] == 2:
             displayed_frame = ir
+            if vr.recording:
+                vr.record(ir)
 
         # displayed_frame = np.hstack((depth_flip, blobs))
-
-        if VARS["learnBG"] == 1:
-            VARS["learnBG"] = 0
-            cv2.imwrite(bg_depth_mask_path, depth)
-            cv2.imwrite(bg_ir_mask_path, ir)
 
         await asyncio.sleep(0)
 
 
 async def frame_streamer(response):
     while True:
-        ret, jpeg = cv2.imencode('.jpg', displayed_frame)
+        _, jpeg = cv2.imencode('.jpg', displayed_frame)
         f = jpeg.tobytes()
         response.write(
             b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + bytearray(f) + b'\r\n')
-        await asyncio.sleep(0.01)
+        await asyncio.sleep(0.0)  # 0.0 1/FPS
 
 
 def create_corpus(path):
     lines = []
-    # with open("/home/thomas/dev/Interlignes/tentative.txt", "r") as f:
-    # MERCI
     with open(path, "r") as f:
-
         for l in f:
             l = l.strip()
             if len(l) > 0:
-                print(l)
                 lines.append(l)
     return lines
 
@@ -265,8 +209,12 @@ def post_webparams(request, name, value):
 
 @app.route("/save_params", methods=['GET'])
 def save_params(request):
-    with open("last_params.json", "w") as f:
+    now = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+    with open(f"params/params_{now}.json", "w") as f:
         js.dump(VARS, f, indent=4)
+    with open("params.json", "w") as f:
+        js.dump(VARS, f, indent=4)
+
     # lien symbolique
     return json({"received": True})
 
@@ -278,9 +226,11 @@ current_ponctuation_paragraph = 0
 tentative = create_corpus("/home/thomas/dev/Interlignes/tentative.txt")
 merci = create_corpus("/home/thomas/dev/Interlignes/MERCI2.txt")
 ponctuation = create_corpus("/home/thomas/dev/Interlignes/ponctuation.txt")
-corpus = ponctuation + tentative + ponctuation + merci + ponctuation
+corpus = tentative + ponctuation + merci  # + ponctuation
 
 
+
+## Réimplémenter les fonctions liées au corpus dans le JAVASCRIPT
 @app.route("/paragraphe/<walker_id>", methods=['POST', 'OPTIONS'])
 def paragraphe(request, walker_id):
     global current_paragraph, current_ponctuation_paragraph, new_params, VARS
@@ -290,9 +240,9 @@ def paragraphe(request, walker_id):
         current_paragraph = 0
         current_ponctuation_paragraph = 0
 
-    if VARS["anniversaire"] > 0:
-        texte = "Joyeux anniversaire Stéphanie !        Joyeux anniversaire Stéphanie !        Joyeux anniversaire Stéphanie !"
-        VARS["anniversaire"] -= 1
+    # if VARS["anniversaire"] > 0:
+    #     texte = "Joyeux anniversaire Laurence !        Joyeux anniversaire Laurence !        Joyeux anniversaire Laurence !"
+    #     VARS["anniversaire"] -= 1
 
     elif VARS["ponctuation_proba"] > np.random.random() * 100:
         texte = ponctuation[current_ponctuation_paragraph]
@@ -340,7 +290,7 @@ app.static('/text_params.json', './text_params.json')
 
 
 if __name__ == '__main__':
-    server = app.create_server(host="0.0.0.0", port=8888, debug=True)
+    server = app.create_server(host="0.0.0.0", port=8888)  # , debug=True)
     loop = asyncio.get_event_loop()
     task = asyncio.ensure_future(server)
     kinect_task = asyncio.ensure_future(kinect_loop())
