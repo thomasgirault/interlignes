@@ -5,6 +5,8 @@ var context = canvas.getContext('2d');
 var video = $("#interlude2")[0];
 var video_play = false;
 
+var corpus = new Corpus()
+
 canvas.width = 1920, canvas.height = 1200;
 
 var native_width = 512, native_height = 424;
@@ -54,20 +56,7 @@ tracker.onmessage = function (event) {
 			});
 		} else if ("control" in data) {
 			set_data(data.control);
-			if ("interlude" in data.control) {
-				params["interlude"] = data.control["interlude"];
-			} else if ("interlude_play" in data.control) {
-				console.log("interlude_play");
-				var video_name = '#interlude' + String(params["interlude"]);
-				video = $(video_name)[0];
-				params["textColor"] = "#000000";
-				video.pause();
-				video_play = true;
-				video.play();
-				params["interlude"] += 1;
-				params["interlude"] %= params["max_interludes"];
-			}
-
+			console.log(data.control);
 		}
 	}
 };
@@ -84,6 +73,20 @@ $(window).bind('storage', function (e) {
 var frame = 0;
 
 function draw() {
+	if (params["interlude_play"]) {
+		console.log("interlude_play");
+		var video_name = '#interlude' + String(params["interlude"]);
+		video = $(video_name)[0];
+		params["textColor"] = "#000000";
+		video.pause();
+		video_play = true;
+		video.play();
+		params["interlude"] += 1;
+		params["interlude"] %= params["max_interludes"];
+		params["interlude_play"] = 0;
+	}
+
+
 	if (video_play) {
 		if (video.paused || video.ended) {
 			video.pause();

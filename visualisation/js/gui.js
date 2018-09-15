@@ -23,17 +23,17 @@ class Controls {
 
         var obj = {
             learnBG:
-            function () {
-                $.ajax({
-                    type: "POST",
-                    url: self.url + "/" + name + "/" + Math.round(1),
-                    data: JSON.stringify({ name: Math.round(0) }),
-                    contentType: "application/json; charset=utf-8",
-                    dataType: "json",
-                    success: function (data) { console.log(data); },
-                    failure: function (errMsg) { alert(errMsg); }
-                });
-            }
+                function () {
+                    $.ajax({
+                        type: "POST",
+                        url: self.url + "/" + name + "/" + Math.round(1),
+                        data: JSON.stringify({ name: Math.round(0) }),
+                        contentType: "application/json; charset=utf-8",
+                        dataType: "json",
+                        success: function (data) { console.log(data); },
+                        failure: function (errMsg) { alert(errMsg); }
+                    });
+                }
         };
         this.folder.add(obj, "learnBG");
     }
@@ -74,14 +74,9 @@ var params = {
     "erode_iterations": { "val": 1, "min": 1, "max": 10 },
     "max_age": { "val": 5, "min": 1, "max": 30 },
     "min_hits": { "val": 10, "min": 1, "max": 30 },
-    "anniversaire": { "val": 0, "min": 0, "max": 43 },
     "smooth": { "val": 0, "min": 0, "max": 10 },
-    "init_texte": { "val": false, "min": false, "max": true },
-    "extra_spaces": { "val": 1, "min": 0, "max": 20 },
-    "ponctuation_proba": { "val": 0, "min": 0, "max": 100 },
-    "video_ok": { "val": true, "min": false, "max": true },
-    "save": { "val": false, "min": false, "max": true },
-    "learnBG": { "val": null, "min": null, "max": null }
+    "learnBG": { "val": false, "min": false, "max": true },
+    "save": { "val": false, "min": false, "max": true }
 };
 
 
@@ -94,10 +89,15 @@ var web_params = {
     "max_word_ts_interval": { "val": 2, "min": 0, "max": 10 },
     "kerning": { "val": 0, "min": 0, "max": 100 },
     "word_interspaces": { "val": 2, "min": 0, "max": 10 },
+    "ponctuation_proba": { "val": 0, "min": 0, "max": 100 },
     "sentence_interspaces": { "val": 10, "min": 0, "max": 40 },
     "min_distance": { "val": 10, "min": 0, "max": 50 },
-    "interlude": { "val": 0, "min": 0, "max": 4 },
-    "interlude_play": { "val": false, "min": false, "max": true }
+    "init_texte": { "val": false, "min": false, "max": true },
+    // "anniversaire": { "val": 0, "min": 0, "max": 43 },
+    "extra_spaces": { "val": 1, "min": 0, "max": 20 },
+    "interlude": { "val": 0, "min": 0, "max": 8 },
+    "interlude_play": { "val": false, "min": false, "max": true },
+    "video_ok": { "val": true, "min": false, "max": true }
 };
 
 
@@ -146,16 +146,16 @@ $.ajax({
 function save_all(gui) {
     var obj = {
         save_params:
-        function () {
-            $.ajax({
-                type: "GET",
-                url: "/save_params",
-                contentType: "application/json; charset=utf-8",
-                dataType: "json",
-                success: function (data) { console.log(data); },
-                failure: function (errMsg) { alert(errMsg); }
-            });
-        }
+            function () {
+                $.ajax({
+                    type: "GET",
+                    url: "/save_params",
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (data) { console.log(data); },
+                    failure: function (errMsg) { alert(errMsg); }
+                });
+            }
     };
     gui.add(obj, "save_params");
 

@@ -6,12 +6,15 @@ var params = {
     "clearPeriod": 5,
     "max_word_ts_interval": 2,
     "min_distance": 15,
-    "kerning":0,
-    "word_interspaces":0,
-    "sentence_interspaces":0,
-    "textColor" : "#ffffff",
-    "interlude":0,
-    "max_interludes":5
+    "kerning": 0,
+    "word_interspaces": 0,
+    "sentence_interspaces": 0,
+    "textColor": "#ffffff",
+    "interlude": 0,
+    "max_interludes": 5,
+    "ponctuation_proba": 0,
+    "interlude_play": 0,
+    "video_ok": 1
 }
 
 
@@ -57,7 +60,7 @@ function Texter(id) {
         canvas = document.getElementById('interlignes');
         context = canvas.getContext('2d');
         _this.setBackground(_this.bgColor);
-        context.fillStyle = params["textColor"] ;//_this.textColor;
+        context.fillStyle = params["textColor"];//_this.textColor;
         askNewText();
         update();
     };
@@ -98,7 +101,7 @@ function Texter(id) {
             if (_this.textIndex > _this.text.length - 1) {
                 askNewText();
             }
-            if (_this.textIndex < _this.text.length){
+            if (_this.textIndex < _this.text.length) {
                 var letter = _this.text[_this.textIndex];
             } else {
                 console.log("OVERFLOW", letter, _this.textIndex, _this.text.length);
@@ -175,11 +178,11 @@ function Texter(id) {
 
     function textWidth(string, size) {
         context.font = size + "px Georgia";
-        
+
 
         var space = params["kerning"];
 
-        if(string == ' ')
+        if (string == ' ')
             space += params['word_interspaces']
 
         if (context.fillText) {
@@ -216,14 +219,17 @@ function Texter(id) {
         textIndex = 0;
     }
 
-
-
     var askNewText = function () {
+        var extra_spaces = " ".repeat(parseInt(params["sentence_interspaces"]));
+        _this.textIndex = 0;
+        _this.text = corpus.get_paragraph() + extra_spaces;
+    }
+
+    var askNewTextOld = function () {
         // console.log(_this.id, "asks new text");
         $.ajax({
             type: "POST",
             async: false,
-            // url: "http://localhost:8888/paragraphe/" + id,
             url: "./paragraphe/" + id,
 
             data: JSON.stringify({ 'id': _this.id }),
@@ -232,7 +238,7 @@ function Texter(id) {
             success: function (data) {
                 console.log(data);
                 _this.textIndex = 0;
-                _this.text = data.texte + " ".repeat(params["sentence_interspaces"]);                
+                _this.text = data.texte + " ".repeat(params["sentence_interspaces"]);
             },
             failure: function (errMsg) { alert(errMsg); }
         });
