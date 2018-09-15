@@ -40,15 +40,20 @@ class BGSWrapper:
         self.algo_a = bgs.CodeBook()
         self.algo_b = bgs.CodeBook()
         self.nb_frames = 0
+        self.init = True
         # bgs.LBSimpleGaussian() #
         # bg_algo = bgs.LBFuzzyGaussian()
 
     def apply(self, frame, lr=VARS["learnBG"]):
-        self.nb_frames += 1
+        # self.nb_frames += 1
         mask = self.algo_a.apply(frame)
-        self.algo_a = self.algo_b
         return mask
+        # if lr == 1:
+        #     mask = self.algo_b.apply(frame)        
+        # self.algo_a = self.algo_b
 
+    def save(self, bg_mask):
+        pass
 
 class Frame:
 
