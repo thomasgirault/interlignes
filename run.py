@@ -45,9 +45,8 @@ except Exception as e:
     # video_path = "/home/thomas/Vidéos/interlignes/2017-09-30\ 21:36:10.avi"
     # video_path = "/home/thomas/Vidéos/interlignes/2017-09-30 21:20:04.avi"
     video_path = "/home/thomas/Vidéos/interlignes/2017-09-25 19:37:59.avi"
-    # video_path = 1
-    # kinect = DepthVideo(video_path)
-    kinect = Webcam(1)
+    kinect = DepthVideo(video_path)
+    # kinect = Webcam(1)
     VARS["depth_ir"] = 1
 
 sort_tracker = Sort(max_age=5, min_hits=10)
@@ -107,8 +106,11 @@ def blob_detection(frame, min_blob_size=VARS["min_blob_size"],  max_blob_size=VA
 async def kinect_loop():
     global displayed_frame
 
-    bgs_depth = BGSubstractor('depth_mask')
-    bgs_ir = BGSubstractor('depth_ir')
+    # bgs_depth = BGSubstractor('depth_mask')
+    # bgs_ir = BGSubstractor('depth_ir')
+    bgs_depth = BGSWrapper()
+    bgs_ir = BGSWrapper()
+
     vr = VideoRecorder()
     # initialisation avec 100x l'image sauvegardée précédement
 
@@ -229,8 +231,15 @@ ponctuation = create_corpus("/home/thomas/dev/Interlignes/ponctuation.txt")
 corpus = tentative + ponctuation + merci  # + ponctuation
 
 
+@app.route('corpus/<name>', methods=['GET'])
+def send_corpus(request, name):
 
-## Réimplémenter les fonctions liées au corpus dans le JAVASCRIPT
+    data = create_corpus(f"/home/thomas/dev/Interlignes/{name}.txt")
+
+    return json({"corpus": name, "data": data})
+
+
+# Réimplémenter les fonctions liées au corpus dans le JAVASCRIPT
 @app.route("/paragraphe/<walker_id>", methods=['POST', 'OPTIONS'])
 def paragraphe(request, walker_id):
     global current_paragraph, current_ponctuation_paragraph, new_params, VARS
