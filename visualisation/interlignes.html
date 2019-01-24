@@ -24,6 +24,15 @@
 
 		video {
 			display: none;
+			width: 1920px;
+			height: 1200px; 
+			
+			position: fixed; 
+			right: 0; 
+			bottom: 0;
+    		
+			/*min-width: 100%; min-height: 100%;
+    		width: auto; height: auto; z-index: -100;*/
 		}
 	</style>
 
@@ -37,9 +46,6 @@
 </head>
 
 <body>
-	<canvas id='interlignes'></canvas>
-	<script type="text/javascript" src="js/main_texter.js"></script>
-
 	<video id="interlude0" preload="auto" src="videos_new/VIRGULE 3.webm"></video>
 	<video id="interlude1" preload="auto" src="videos_new/VIRGULE 2.webm"></video>
 	<video id="interlude2" preload="auto" src="videos_new/DEUX POINTS 3.webm"></video>
@@ -49,6 +55,10 @@
 	<video id="interlude6" preload="auto" src="videos_new/Le_E_.webm"></video>
 	<video id="interlude7" preload="auto" src="videos_new/guillemets_01.webm"></video>
 	<video id="interlude8" preload="auto" src="videos_new/egal_01.webm"></video>
+
+	<canvas id='interlignes'></canvas>
+	<script type="text/javascript" src="js/main_texter.js"></script>
+
 
 
 	<!-- <video id="interlude2" preload = "auto" src="videos/VIRGULE_2.0.webm"></video>	

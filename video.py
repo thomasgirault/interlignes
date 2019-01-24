@@ -46,8 +46,10 @@ class Webcam:
 
 # https://github.com/gilbertfrancois/video-capture-async/blob/master/main/gfd/py/video/capture.py
 # http://blog.blitzblit.com/2017/12/24/asynchronous-video-capture-in-python-with-opencv/
+
+
 class VideoCaptureTreading:
-    def __init__(self, src=0, width=640, height=480):
+    def __init__(self, src=0, width=640, height=400):
         self.src = src
         self.cap = cv2.VideoCapture(self.src)
         # self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
@@ -115,6 +117,9 @@ class DepthVideo:
         return self.gray
 
     def close(self):
+        self.cap.release()
+
+    def stop(self):
         self.cap.release()
 
 

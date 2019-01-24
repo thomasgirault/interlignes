@@ -31,9 +31,11 @@ VARS["depth_ir"] = 1
 # video_path = "/home/thomas/Vidéos/interlignes/2017-09-30\ 21:36:10.avi"
 # video_path = "/home/thomas/Vidéos/interlignes/2017-09-30 21:20:04.avi"
 video_path = "/home/thomas/Vidéos/interlignes/2017-09-25 19:37:59.avi"
-ip = '192.168.0.25'
+# ip = '192.168.0.25'
 ip = '169.254.72.191'
+ip = '10.3.141.1'
 video_path = f"http://{ip}:8080/stream/video.mjpeg"
+# video_path = "/home/thomas/Vidéos/interlignes/2019-01-24_10:55:49.avi"
 # cam = DepthVideo(video_path)
 cam = VideoCaptureTreading(video_path).start()
 
@@ -49,7 +51,7 @@ fp = FrameProcessor()
 
 
 async def cam_loop():
-    global jpeg_frame
+    global jpeg_frame, tracked_points
     vr = VideoRecorder()
     # initialisation avec 100x l'image sauvegardée précédement
     while True:
@@ -67,7 +69,7 @@ async def cam_loop():
             VARS["learnBG"] = 0
             fp.save_background()
 
-        fp.process()
+        tracked_points = fp.process()
 
         await asyncio.sleep(0.05)
 
@@ -144,7 +146,7 @@ async def tracker(request, ws):
             await ws.send(js.dumps({"control": new_params}))
             new_params = {}
 
-        await asyncio.sleep(0)
+        await asyncio.sleep(0.005)
 
 
 app.static('/', './visualisation')

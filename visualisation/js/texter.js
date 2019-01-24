@@ -61,6 +61,9 @@ function Texter(id) {
         context = canvas.getContext('2d');
         _this.setBackground(_this.bgColor);
         context.fillStyle = params["textColor"];//_this.textColor;
+        // box-shadow: 0px 0px 12px rgba(255, 255, 255, 0.5);
+
+
         askNewText();
         update();
     };
@@ -81,6 +84,13 @@ function Texter(id) {
         context.fillStyle = params["textColor"];
         context.translate(_this.last_tracked_point[0], _this.last_tracked_point[1]);
         context.rotate(_this.angle + (Math.random() * (_this.angleDistortion * 2) - _this.angleDistortion));
+
+        context.textBaseline = "top"
+        context.shadowOffsetX = 0;
+        context.shadowOffsetY = 0;
+        context.shadowBlur = 24;
+        context.shadowColor = 'rgba(255, 0, 0, 0.5);';
+
         context.fillText(letter, 0, 0);
         context.restore();
 

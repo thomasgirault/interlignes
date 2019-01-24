@@ -9,7 +9,7 @@ var corpus = new Corpus()
 
 canvas.width = 1920, canvas.height = 1200;
 
-var native_width = 512, native_height = 424;
+var native_width = 640, native_height = 400;
 var width = 1920, height = 1200;
 
 var height_ratio = (height / native_height);
@@ -78,8 +78,10 @@ function draw() {
 		var video_name = '#interlude' + String(params["interlude"]);
 		video = $(video_name)[0];
 		params["textColor"] = "#000000";
+		context.clearRect(0, 0, canvas.width, canvas.height);
 		video.pause();
 		video_play = true;
+		video.style.display = "inline";
 		video.play();
 		params["interlude"] += 1;
 		params["interlude"] %= params["max_interludes"];
@@ -92,11 +94,11 @@ function draw() {
 			video.pause();
 			video_play = false;
 			params["textColor"] = "#FFFFFF";
+			video.style.display = "none";
 		}
-		context.clearRect(0, 0, canvas.width, canvas.height);
-		context.drawImage(video, 0, 0, width * 0.8, height * 0.8);
+		// context.clearRect(0, 0, canvas.width, canvas.height);
+		// // context.drawImage(video, 0, 0, width * 0.8, height * 0.8);
 		// context.drawImage(video, 0, 0, width, height);
-
 	} else if (frame == 0) {
 		var img = context.getImageData(0, 0, canvas.width, canvas.height);
 		context.clearRect(0, 0, canvas.width, canvas.height);
@@ -114,47 +116,6 @@ function draw() {
 }
 
 draw();
-
-// function clear_() {
-	// 	if (frame == 0) {
-	// 		context.save();
-	// 		// context.globalCompositeOperation = "darker";
-
-	// 		context.globalAlpha = 0.8;
-	// 		context.fillStyle = 'rgba(0,0,0,0.1)';
-	// 		context.fillRect(0, 0, canvas.width, canvas.height);
-	// 		context.fillStyle = 'rgba(255,255,255,1)';
-	// 		context.restore();
-	// 	}
-	// 	// frame++;
-	// 	// frame %= params["clearPeriod"];
-	// }
-
-
-// function init() {
-// 	draw();
-// 	raf = window.requestAnimationFrame(init);
-// }
-// init();
-
-// video.addEventListener("play", draw_video, false);
-// function draw_video() {
-// 	if (video.paused || video.ended) {
-// 		return;
-// 	}
-// 	context.drawImage(video, 0, 0, width, height);
-// 	requestAnimationFrame(draw_video);
-// }
-
-
-// function draw_video2() {
-// 	if (interlude2.paused || interlude2.ended) {
-// 		return;
-// 	}
-// 	// processFrame();
-// 	context.drawImage(interlude2, 0, 0, width, height);
-// 	requestAnimationFrame(draw_video2);
-// }
 
 
 

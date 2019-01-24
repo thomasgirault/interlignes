@@ -67,6 +67,7 @@ var params = {
     "theta": { "val": 0, "min": 0, "max": 255 },
     "blur": { "val": 5, "min": 0, "max": 20 },
     "MAX_DIST": { "val": 73, "min": 1, "max": 73 },
+    "ir_divisor": { "val": 8, "min": 1, "max": 64 },
     "min_blob_size": { "val": 20, "min": 1, "max": 300 },
     "max_blob_size": { "val": 500, "min": 100, "max": 500 },
     "min_norm": { "val": 1, "min": 0, "max": 10 },
