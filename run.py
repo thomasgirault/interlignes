@@ -7,7 +7,7 @@ import asyncio
 from signal import signal, SIGINT
 import json as js
 
-from video import DepthVideo, VideoRecorder, Webcam, VideoCaptureTreading
+from video import VideoReader, VideoCaptureTreading
 from Tracker import *
 
 from sanic import Sanic, response
@@ -36,8 +36,9 @@ ip = '169.254.72.191'
 ip = '10.3.141.1'
 video_path = f"http://{ip}:8080/stream/video.mjpeg"
 # video_path = "/home/thomas/Vidéos/interlignes/2019-01-24_10:55:49.avi"
-# cam = DepthVideo(video_path)
-cam = VideoCaptureTreading(video_path).start()
+video_path = "/home/thomas/Vidéos/interlignes/test_jeudi.mp4"
+cam = VideoReader(video_path)
+# cam = VideoCaptureTreading(video_path).start()
 
 fp = FrameProcessor()
 
@@ -52,17 +53,17 @@ fp = FrameProcessor()
 
 async def cam_loop():
     global jpeg_frame, tracked_points
-    vr = VideoRecorder()
+    # vr = VideoRecorder()
     # initialisation avec 100x l'image sauvegardée précédement
     while True:
         ir = cam.get_frame()
 
-        if VARS['save'] and not VARS['last_save']:
-            vr.start_recording()
-        elif not VARS['save'] and VARS['last_save']:
-            vr.stop_recording()
-        if vr.recording:
-            vr.record(ir)
+        # if VARS['save'] and not VARS['last_save']:
+        #     vr.start_recording()
+        # elif not VARS['save'] and VARS['last_save']:
+        #     vr.stop_recording()
+        # if vr.recording:
+        #     vr.record(ir)
 
         fp.update(ir)
         if VARS["learnBG"] == 1 or not fp.bgs.init:
