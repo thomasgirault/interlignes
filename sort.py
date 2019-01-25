@@ -42,6 +42,7 @@ def iou(bb_test, bb_gt):
               + (bb_gt[2] - bb_gt[0]) * (bb_gt[3] - bb_gt[1]) - wh)
     return(o)
 
+
 @jit
 def convert_bbox_to_z(bbox):
     """
@@ -56,6 +57,7 @@ def convert_bbox_to_z(bbox):
     s = w * h  # scale is just area
     r = w / float(h)
     return np.array([x, y, s, r]).reshape((4, 1))
+
 
 @jit
 def convert_x_to_bbox(x, score=None):
@@ -192,13 +194,12 @@ class Sort(object):
         self.max_norm = 500
         self.max_id = 0
 
-
     def find_nearest_lost_tracker(self, det):
         if len(self.lost_tracker_positions) > 0:
             self.knn.fit(self.lost_tracker_positions)
             dist, indices = self.knn.kneighbors([det])
-            idx = indices[0,0]
-            d = dist[0,0] 
+            idx = indices[0, 0]
+            d = dist[0, 0]
             # print("knn", d, idx, self.lost_tracker_ids[idx])
             if d < self.max_norm:
                 # print("knn OK")
@@ -208,10 +209,8 @@ class Sort(object):
             #     print("knn KO")
             # self.lost_tracker_ids.pop(idx)
             # return self.lost_tracker_ids.pop(0) if len(self.lost_tracker_ids) > 0 else None
-        
 
         return self.max_id + 1
-        
 
     def forget_tracker(self, trk):
         self.lost_tracker_ids.append(trk.id)
@@ -219,7 +218,7 @@ class Sort(object):
         self.lost_tracker_positions.append(last_position)
         # print("LOST WALKER", trk.id)
 
-    def update(self, dets):
+    def update(self, dets, min_hits, max_age):
         """
         Params:
             dets - a numpy array of detections in the format [[x1,y1,x2,y2,score],[x1,y1,x2,y2,score],...]
@@ -241,7 +240,8 @@ class Sort(object):
         trks = np.ma.compress_rows(np.ma.masked_invalid(trks))
         for t in reversed(to_del):
             self.trackers.pop(t)
-        matched, unmatched_dets, unmatched_trks = associate_detections_to_trackers(dets, trks)
+        matched, unmatched_dets, unmatched_trks = associate_detections_to_trackers(
+            dets, trks)
         # print(f"matched : {matched}, unmatched_dets : {unmatched_dets}, unmatched_trks : {unmatched_trks}")
 
         # update matched trackers with assigned detections
@@ -252,7 +252,6 @@ class Sort(object):
 
         # create and initialise new trackers for unmatched detections
         for i in unmatched_dets:
-
             t_id = self.find_nearest_lost_tracker(dets[i, :][0:-1])
 
             trk = KalmanBoxTracker(dets[i, :], t_id=t_id)
@@ -263,12 +262,12 @@ class Sort(object):
         i = len(self.trackers)
         for trk in reversed(self.trackers):
             d = trk.get_state()[0]
-            if((trk.time_since_update < 1) and (trk.hit_streak >= self.min_hits or self.frame_count <= self.min_hits)):
+            if((trk.time_since_update < 1) and (trk.hit_streak >= min_hits or self.frame_count <= min_hits)):
                 # +1 as MOT benchmark requires positive
                 ret.append(np.concatenate((d, [trk.id + 1])).reshape(1, -1))
             i -= 1
             # remove dead tracklet
-            if(trk.time_since_update > self.max_age):
+            if(trk.time_since_update > max_age):
                 self.forget_tracker(trk)
                 self.trackers.pop(i)
         if(len(ret) > 0):
