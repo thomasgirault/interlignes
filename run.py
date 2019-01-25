@@ -106,10 +106,10 @@ def blob_detection(frame, min_blob_size=VARS["min_blob_size"],  max_blob_size=VA
 async def kinect_loop():
     global displayed_frame
 
-    # bgs_depth = BGSubstractor('depth_mask')
-    # bgs_ir = BGSubstractor('depth_ir')
-    bgs_depth = BGSWrapper()
-    bgs_ir = BGSWrapper()
+    bgs_depth = BGSubstractor('depth_mask')
+    bgs_ir = BGSubstractor('depth_ir')
+    # bgs_depth = BGSWrapper()
+    # bgs_ir = BGSWrapper()
 
     vr = VideoRecorder()
     # initialisation avec 100x l'image sauvegardée précédement
@@ -163,13 +163,19 @@ async def kinect_loop():
         await asyncio.sleep(0)
 
 
+async def get_jpeg_bytes():
+    while True:
+        ret, jpeg = cv2.imencode('.jpg', displayed_frame)
+        f = jpeg.tobytes()  # bytearray
+        if ret:
+            return b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + f + b'\r\n'
+
+
 async def frame_streamer(response):
     while True:
-        _, jpeg = cv2.imencode('.jpg', displayed_frame)
-        f = jpeg.tobytes()
-        response.write(
-            b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + bytearray(f) + b'\r\n')
-        await asyncio.sleep(0.0)  # 0.0 1/FPS
+        jpeg_frame = await get_jpeg_bytes()
+        await response.write(jpeg_frame)
+        await asyncio.sleep(0.05)  # 0.0 1/FPS
 
 
 def create_corpus(path):
