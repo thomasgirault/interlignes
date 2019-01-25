@@ -98,7 +98,7 @@ class VideoCaptureTreading:
         self.cap.release()
 
 
-class DepthVideo:
+class VideoReader:
 
     def __init__(self, video_path):
         self.video_path = video_path
@@ -108,12 +108,16 @@ class DepthVideo:
         self.gray = None
 
     def get_frame(self, get_depth=False, get_ir=False):
-        if not self.cap.isOpened():
+        if not self.cap.isOpened(): # or self.frame_counter == self.cap.get(cv2.cv.CV_CAP_PROP_FRAME_COUNT):
             print("reopen Video")
+            self.frame_counter = 0
             self.cap = cv2.VideoCapture(self.video_path)
         ret, frame = self.cap.read()
         if ret:
             self.gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        else:
+            self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+            self.cap = cv2.VideoCapture(self.video_path)
         return self.gray
 
     def close(self):
