@@ -3,14 +3,17 @@ import numpy as np
 import traceback
 from sort import Sort
 from conf import VARS
-from BGSubstractor import BGSubstractor
+from BGSubstractor import MogSubstractor, BGSWrapper, SimpleSubstractor
 
 
 class FrameProcessor:
-    bgs = BGSubstractor("depth_ir")  # BGSWrapper()
+    bgs = BGSWrapper("depth_ir")
+    # bgs = MogSubstractor("depth_ir")
+    # bgs = SimpleSubstractor("depth_ir")
     sort_tracker = Sort(max_age=5, min_hits=10)
     font = cv2.FONT_HERSHEY_SIMPLEX
     morph_type = cv2.MORPH_OPEN
+    # morph_type = cv2.MORPH_DILATE
 
     def __init__(self):
         self.frame = None
@@ -26,8 +29,8 @@ class FrameProcessor:
         # self.threshold(
         #     min_depth=VARS["min_depth"], max_depth=VARS["max_depth"], theta=VARS["theta"])
         self.frame = self.clean(self.frame,
-                                VARS["erode_kernel_size"],
-                                VARS["erode_iterations"])
+                                VARS["open_kernel_size"],
+                                VARS["dilate_kernel_size"])
 
         detections = self.blob_detection(VARS["min_blob_size"],
                                          VARS["max_blob_size"])
@@ -53,10 +56,14 @@ class FrameProcessor:
     def bg_substract(self):
         return self.bgs.apply(self.frame, lr=VARS["learnBG"])
 
-    def clean(self, mask, kernel_size, iterations):
-        kernel = np.ones((kernel_size, kernel_size), np.uint8)
-        mask_dilate = cv2.morphologyEx(
-            mask, self.morph_type, kernel, iterations)
+    def clean(self, mask, open_kernel_size, dilate_kernel_size):
+        iterations = 3
+        k_open = np.ones((open_kernel_size, open_kernel_size), np.uint8)
+        k_dilate = np.ones((dilate_kernel_size, dilate_kernel_size), np.uint8)
+        mask_open = cv2.morphologyEx(mask, self.morph_type,
+                                     k_open, iterations)
+        mask_dilate = cv2.morphologyEx(mask_open, cv2.MORPH_DILATE,
+                                       k_dilate, iterations)
         return mask_dilate
 
         # self.frame = cv2.bitwise_and(self.frame, mask_dilate)
@@ -91,13 +98,16 @@ class FrameProcessor:
             rects.append((x, y, w, h))
             detections.append((x, y, x + w, y + h, 1))
             cv2.rectangle(self.blobs, (x, y), (x + w, y + h), (255, 0, 0), 2)
+            cv2.rectangle(self.frame0, (x, y), (x + w, y + h), (255, 0, 0), 2)
         return np.array(detections)
 
     def track(self, detections):
         try:
             tracked_points = {}
 
-            for x1, y1, x2, y2, walker_id in self.sort_tracker.update(detections):
+            for x1, y1, x2, y2, walker_id in self.sort_tracker.update(detections,
+                                                                      VARS["min_hits"],
+                                                                      VARS["max_age"]):
                 w_id = str(int(walker_id))
                 x = int((x2 + x1) / 2)
                 y = int((y2 + y1) / 2)
@@ -105,6 +115,10 @@ class FrameProcessor:
                 cv2.circle(self.blobs, (x, int(y2)), 5, (0, 0, 255), -1)
                 cv2.putText(self.blobs, w_id, (x, y),
                             self.font, 1, (128, 128, 0), 1, cv2.LINE_AA)
+
+                cv2.circle(self.frame0, (x, int(y2)), 5, (255, 0, 255), -1)
+                cv2.putText(self.frame0, w_id, (x, y),
+                            self.font, 1, (255, 255, 255), 1, cv2.LINE_AA)
 
         except Exception as e:
             print(e)
