@@ -4,7 +4,8 @@
   <title>Kinect Streaming</title>
   <script type="text/javascript" src="./node_modules/jquery/dist/jquery.min.js"></script>
   <script type="text/javascript" src="./node_modules/dat.gui/build/dat.gui.min.js"></script>
-  <script type="text/javascript" src="./node_modules/maptastic/build/maptastic.min.js"></script>
+  <script type="text/javascript" src="./node_modules/maptastic/build/maptastic.js"></script>
+  <script type="text/javascript" src="./node_modules/panzoom/dist/panzoom.js"></script>
   <script type="text/javascript" src="./js/gui.js" charset="utf-8"></script>
 
 
@@ -31,40 +32,77 @@
 </head>
 
 <body>
-  <div id='interlignes'>
-    <img src="http://localhost:8888/video_feed" id="kinect">
+  <div id='zoom'>
+    <div id='interlignes'>
+      <img src="http://localhost:8888/video_feed" id="kinect">
+
+      <script>
+        var img = document.getElementById('kinect');
+        img.src = 'http://localhost:8888/video_feed';
+
+        setInterval(function () {
+          var img = document.getElementById('kinect');
+
+          console.log("img size", img.naturalWidth);
+          if (img.naturalWidth == 0) {
+            img.src = 'http://localhost:8888/video_feed';
+          }
+        }, 10000);
+
+
+        // panzoom(document.getElementById('zoom'), {
+        var mapper = Maptastic("interlignes");
+        // 	onchange: myChangeHandler,
+
+        var layout = mapper.getLayout();
+        // console.log(layout);
+
+        // layout[0]["sourcePoints"] = [[200, 200], [1249, 200], [1249, 880], [200, 880]];
+        layout[0]["sourcePoints"] = [[0, 0], [1600, 0], [1600, 1200], [0, 1200]];
+
+        mapper.setLayout(layout);
+
+
+        $(window).bind('storage', function (e) {
+          var mapping = mapper.getLayout();
+          var new_value = $.parseJSON(e.originalEvent.newValue);
+          mapper.setLayout(new_value);
+        });
+
+      </script>
+    </div>
+
   </div>
 
   <script>
-    var img = document.getElementById('kinect');
-    img.src = 'http://localhost:8888/video_feed';
+    document.getElementById('zoom').appendChild(
+      document.getElementsByTagName('canvas')[0]
+    );
 
-    setInterval(function () {
-      var img = document.getElementById('kinect');
-
-      console.log("img size", img.naturalWidth);
-      if (img.naturalWidth == 0) {
-        img.src = 'http://localhost:8888/video_feed';
-      }
-    }, 10000);
-
-
-    var mapper = Maptastic("interlignes");
-    // 	onchange: myChangeHandler,
-
-    var layout = mapper.getLayout();
-    console.log(layout);
-
-    layout[0]["sourcePoints"] = [[200, 200], [1249, 200], [1249, 880], [200, 880]];
-    mapper.setLayout(layout);
-
-
-    $(window).bind('storage', function (e) {
-      var mapping = mapper.getLayout();
-      var new_value = $.parseJSON(e.originalEvent.newValue);
-      mapper.setLayout(new_value);
+    // panzoom(document.getElementsByTagName('body')[0], {
+    var controller = panzoom(document.getElementById('zoom'), {
+      // smoothScroll: false
     });
+    controller.pause();
+
+    document.addEventListener('keyup', (event) => {
+      const nomTouche = event.key;
+      if (nomTouche === 'z') {
+        console.log("!ZOOM -> ZOOM");
+        if (controller.isPaused())
+          controller.resume();   //  Resume panzoom
+        else
+          controller.pause();    //  Pauses event handling
+      }
+    }, false);
+
+//     controller.isPaused(); //  returns false
+// controller.isPaused(); //  returns true now
+// controller.isPaused(); //  returns false again
+
+
   </script>
+
 </body>
 
 </html>
