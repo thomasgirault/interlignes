@@ -49,7 +49,7 @@ class Webcam:
 
 
 class VideoCaptureTreading:
-    def __init__(self, src=0, width=640, height=400):
+    def __init__(self, src=0, width=640, height=480):
         self.src = src
         self.cap = cv2.VideoCapture(self.src)
         # self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
@@ -85,7 +85,7 @@ class VideoCaptureTreading:
             grabbed = self.grabbed
         return grabbed, frame
 
-    def get_frame(self):
+    def get_frame(self, get_ir=True):
         with self.read_lock:
             gray = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
         return gray
@@ -107,7 +107,7 @@ class VideoReader:
         self.frame_counter = 0
         self.gray = None
 
-    def get_frame(self, get_depth=False, get_ir=False):
+    def get_frame(self, get_ir=True):
         if not self.cap.isOpened(): # or self.frame_counter == self.cap.get(cv2.cv.CV_CAP_PROP_FRAME_COUNT):
             print("reopen Video")
             self.frame_counter = 0
