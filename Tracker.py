@@ -7,10 +7,10 @@ from BGSubstractor import MogSubstractor, BGSWrapper, SimpleSubstractor
 
 
 class FrameProcessor:
-    bgs = BGSWrapper("depth_ir")
+    # bgs = BGSWrapper("depth_ir")
     # bgs = MogSubstractor("depth_ir")
     # bgs = SimpleSubstractor("depth_ir")
-    sort_tracker = Sort(max_age=5, min_hits=10)
+    sort_tracker = Sort(max_age=3, min_hits=5)
     font = cv2.FONT_HERSHEY_SIMPLEX
     morph_type = cv2.MORPH_OPEN
     # morph_type = cv2.MORPH_DILATE
@@ -19,12 +19,33 @@ class FrameProcessor:
         self.frame = None
         self.blobs = None
         self.mask = None
+        self.bgs_strategy = 0
+        # self.bgs = SimpleSubstractor("depth_ir")
+        self.bgs = BGSWrapper("depth_ir")
+
+        # self.set_bgs_strategy(0)
 
     def update(self, frame):
         self.frame0 = frame.copy()
         self.frame = frame
 
+    def set_bgs_strategy(self, bgs_strategy):
+        if self.bgs_strategy != bgs_strategy:
+            self.bgs_strategy = bgs_strategy
+            if self.bgs_strategy == 0:
+                self.bgs = BGSWrapper("depth_ir")
+            elif self.bgs_strategy == 1:
+                self.bgs = MogSubstractor("depth_ir")
+            else:
+                self.bgs = SimpleSubstractor("depth_ir")
+
+    def bg_substract(self):
+        self.set_bgs_strategy(VARS['bgs_strategy'])
+        return self.bgs.apply(self.frame, lr=VARS["learnBG"])
+
     def process(self):
+        # self.apply_contrast(VARS["contrast"])
+        # self.apply_brightness(VARS["brightness"])
         self.frame = self.bg_substract()
         # self.threshold(
         #     min_depth=VARS["min_depth"], max_depth=VARS["max_depth"], theta=VARS["theta"])
@@ -50,11 +71,36 @@ class FrameProcessor:
         # frame = cv2.adaptiveThreshold(frame, 255,cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY,11,2)
         # return frame
 
+    def apply_contrast(self, contrast=0):
+        # https://stackoverflow.com/questions/39308030/how-do-i-increase-the-contrast-of-an-image-in-python-opencv
+        if contrast != 0:
+            f = 131*(contrast + 127)/(127*(131-contrast))
+            alpha_c = f
+            gamma_c = 127*(1-f)
+
+            self.frame0 = cv2.addWeighted(
+                self.frame0, alpha_c, self.frame0, 0, gamma_c)
+
+    def apply_brightness(self, brightness=0):
+        if brightness != 0:
+            if brightness > 0:
+                shadow = brightness
+                highlight = 255
+            else:
+                shadow = 0
+                highlight = 255 + brightness
+            alpha_b = (highlight - shadow)/255
+            gamma_b = shadow
+
+            self.frame0 = cv2.addWeighted(self.frame0, alpha_b,
+                                          self.frame0, 0, gamma_b)
+        # else:
+        #     buf = self.frame0.copy()
+
+        # return buf
+
     def save_background(self):
         self.bgs.save(self.frame0)
-
-    def bg_substract(self):
-        return self.bgs.apply(self.frame, lr=VARS["learnBG"])
 
     def clean(self, mask, open_kernel_size, dilate_kernel_size):
         iterations = 3
