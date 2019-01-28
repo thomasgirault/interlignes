@@ -11,6 +11,7 @@ setGlobalLogger(logger)
 
 from conf import VARS
 
+
 class Kinect:
 
     max_dist = 70
@@ -54,7 +55,7 @@ class Kinect:
             self.color_depth_map = np.zeros((424, 512), np.int32).ravel() \
                 if need_color_depth_map else None
 
-    def get_frame(self, get_depth=False, get_ir=False, record=False):
+    def get_frame(self, get_ir=True):
         frames = self.listener.waitForNewFrame()
         depth = frames["depth"]
 
@@ -64,19 +65,18 @@ class Kinect:
             self.registration.apply(color, depth, self.undistorted, self.registered,
                                     bigdepth=self.bigdepth, color_depth_map=self.color_depth_map)
 
-        res = []
-        if get_depth:
-            depth_array = depth.asarray(np.float32)
-            depth_dist = np.array(depth_array / self.max_dist, dtype=np.uint8)
-            depth_flip = cv2.flip(depth_dist, 1)
-            res.append(depth_flip)
+        res = None
         if get_ir:
             ir = frames["ir"]
             ir_norm = np.array(ir.asarray(np.float32) /
                                self.max_dist, dtype=np.uint8)
-            # ir_norm = np.array(ir.asarray(np.float32)/2, dtype=np.uint8)
             ir_flip = cv2.flip(ir_norm, 1)
-            res.append(ir_flip)
+            res = ir_flip
+        else:  # get_depth:
+            depth_array = depth.asarray(np.float32)
+            depth_dist = np.array(depth_array / self.max_dist, dtype=np.uint8)
+            depth_flip = cv2.flip(depth_dist, 1)
+            res = depth_flip
 
         # depth_array = self.bigdepth.asarray(np.float32)
 
@@ -84,5 +84,9 @@ class Kinect:
         return res
 
     def close(self):
+        self.device.stop()
+        self.device.close()
+
+    def stop(self):
         self.device.stop()
         self.device.close()
