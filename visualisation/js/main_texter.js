@@ -9,7 +9,7 @@ var corpus = new Corpus()
 
 canvas.width = 1920, canvas.height = 1200;
 
-var native_width = 640, native_height = 400;
+var native_width = 640, native_height = 480;
 var width = 1920, height = 1200;
 
 var height_ratio = (height / native_height);
@@ -71,30 +71,56 @@ $(window).bind('storage', function (e) {
 
 // https://stackoverflow.com/questions/45549418/subtract-opacity-instead-of-multiplying
 var frame = 0;
+var animation_id;
+
+function play_video() {
+	params["interlude_play"] = 0;
+	var video_name = '#interlude' + String(params["interlude"]);
+	video = $(video_name)[0];
+	console.log("interlude_play", video);
+	params["textColor"] = "#000000";
+	context.clearRect(0, 0, canvas.width, canvas.height);
+	// cancelAnimationFrame(animation_id);
+	// video.pause();
+	video_play = true;
+	// context.style.display = "none";
+	video.play();
+
+	var playPromise = video.play();
+
+	if (playPromise !== undefined) {
+		playPromise.then(_ => {
+			video.style.display = "inline";
+
+			// Automatic playback started!
+			// Show playing UI.
+			// We can now safely pause video...
+			// video.pause();
+			// video_play = false;
+			// params["textColor"] = "#FFFFFF";
+			// video.style.display = "none";
+		})
+			.catch(error => {
+
+			});
+	}
+	params["interlude"] += 1;
+	params["interlude"] %= params["max_interludes"];
+	params["interlude_play"] = 0;
+}
 
 function draw() {
 	if (params["interlude_play"]) {
-		console.log("interlude_play");
-		var video_name = '#interlude' + String(params["interlude"]);
-		video = $(video_name)[0];
-		params["textColor"] = "#000000";
-		context.clearRect(0, 0, canvas.width, canvas.height);
-		video.pause();
-		video_play = true;
-		video.style.display = "inline";
-		video.play();
-		params["interlude"] += 1;
-		params["interlude"] %= params["max_interludes"];
-		params["interlude_play"] = 0;
+		play_video();
 	}
-
-
 	if (video_play) {
 		if (video.paused || video.ended) {
 			video.pause();
 			video_play = false;
 			params["textColor"] = "#FFFFFF";
+			// context.style.display = "inline";
 			video.style.display = "none";
+			// animation_id = requestAnimationFrame(draw);
 		}
 		// context.clearRect(0, 0, canvas.width, canvas.height);
 		// // context.drawImage(video, 0, 0, width * 0.8, height * 0.8);
@@ -112,10 +138,11 @@ function draw() {
 	}
 	frame++;
 	frame %= params["clearPeriod"];
-	requestAnimationFrame(draw);
+	animation_id = requestAnimationFrame(draw);
 }
 
-draw();
+requestAnimationFrame(draw);
+
 
 
 
