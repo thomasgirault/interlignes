@@ -8,6 +8,7 @@ from signal import signal, SIGINT
 import json as js
 
 from video import VideoReader, VideoCaptureTreading
+# from Kinect import Kinect
 from Tracker import *
 
 from sanic import Sanic, response
@@ -30,41 +31,23 @@ VARS["depth_ir"] = 1
 
 # video_path = "/home/thomas/Vidéos/interlignes/2017-09-30\ 21:36:10.avi"
 # video_path = "/home/thomas/Vidéos/interlignes/2017-09-30 21:20:04.avi"
-video_path = "/home/thomas/Vidéos/interlignes/2017-09-25 19:37:59.avi"
+# video_path = "/home/thomas/Vidéos/interlignes/2017-09-25 19:37:59.avi"
 # ip = '192.168.0.25'
 ip = '169.254.72.191'
-ip = '10.3.141.1'
+# ip = '10.3.141.1'
 video_path = f"http://{ip}:8080/stream/video.mjpeg"
 # video_path = "/home/thomas/Vidéos/interlignes/2019-01-24_10:55:49.avi"
-video_path = "/home/thomas/Vidéos/interlignes/test_jeudi.mp4"
-cam = VideoReader(video_path)
-# cam = VideoCaptureTreading(video_path).start()
+# video_path = "/home/thomas/Vidéos/interlignes/test_jeudi.mp4"
+# cam = VideoReader(video_path)
+cam = VideoCaptureTreading(video_path).start()
+# cam = Kinect(video_path)
 
 fp = FrameProcessor()
 
-# bgs_depth = BGSubstractor('depth_mask')
-# bgs_ir = BGSubstractor('depth_ir')
-# bgs_depth = BGSWrapper()
-
-
-# bgs_depth = BGStrategy('depth_mask')
-# bgs_ir = BGSubstractor('depth_ir')
-
-
 async def cam_loop():
-    global jpeg_frame, tracked_points
-    # vr = VideoRecorder()
-    # initialisation avec 100x l'image sauvegardée précédement
+    global tracked_points
     while True:
-        ir = cam.get_frame()
-
-        # if VARS['save'] and not VARS['last_save']:
-        #     vr.start_recording()
-        # elif not VARS['save'] and VARS['last_save']:
-        #     vr.stop_recording()
-        # if vr.recording:
-        #     vr.record(ir)
-
+        ir = cam.get_frame(bool(VARS['depth_ir']))
         fp.update(ir)
         if VARS["learnBG"] == 1 or not fp.bgs.init:
             VARS["learnBG"] = 0
@@ -137,7 +120,7 @@ def send_corpus(request, name):
 async def tracker(request, ws):
     global new_params
 
-    old_mapping = {}
+    # old_mapping = {}
     # global mapping
     while True:
         if tracked_points != {}:
