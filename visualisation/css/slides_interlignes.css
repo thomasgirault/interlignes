@@ -1,0 +1,63 @@
+/* declares the fonts to use (handled by the file-loader) */
+
+/* uses one font family for the text, a mono-spaced font family for code samples */
+
+/* @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+@import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+@import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic); */
+
+@import url('https://fonts.googleapis.com/css?family=Libre+Baskerville|Lora|Noto+Serif');
+
+
+
+body {
+    /* font-family: "Lora"; */
+    font-family:Georgia, "Bitstream Charter", "URW Bookman L", serif
+}
+/* .remark-code, .remark-inline-code { font-family: Georgia; } */
+
+/*.remark-slide-content h1, .remark-slide-content h2, .remark-slide-content h3 {
+    font-family: 'Ubuntu Mono';
+    font-weight: bold;
+}*/
+
+
+.remark-slide-content {
+    background-color: black !important;
+    color:white;
+
+}
+.remark-slide-content h1 {
+    font-size: 40px;
+    /* border-bottom: 5px solid #17E5F5; */
+    padding-bottom: 5px;
+}
+.remark-slide-content h2 {
+  font-size: 35px;
+  /* border-bottom: 5px solid #F74D9D; */
+  display: inline-block;
+  margin-bottom: 0;
+  margin-top: 0;
+}
+.remark-code {
+  border: solid #FFBD1D;
+  border-width: 1px 1px 1px 10px;
+}
+.center {
+  text-align: center;
+}
+.center p {
+  display: inline-block;
+}
+.md-logo, .webpack-logo {
+  display: inline-block;
+}
+.center .md-logo img {
+  width: 208px;
+  height: 128px;
+  margin-bottom: 36px;
+}
+.center .webpack-logo img {
+  width: 200px;
+  height: 200px
+}
