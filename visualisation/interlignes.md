@@ -10,10 +10,17 @@ http://www.lasophiste.com/portfolio/interlignes/
 <br/>
 https://github.com/thomasgirault/interlignes
 ---
-class: center, middle
-<img src='img_interlignes/interlignes.jpg' width='100%'/>
+<!-- class: center, middle -->
+<img src='img_interlignes/interlignes.jpg' width='120%' style='position: absolute;left: -100px;  top: 0px;'/>
 
 <!-- http://bredechas2017.blogspot.com/2017/04/170428-lml-georges-perec-ses-vies-mode.html -->
+<!-- class: left, middle  -->
+<!-- background-size: cover -->
+
+---
+
+<img src='img_interlignes/interlignes_archives_02.jpg' width='115%' style='position: absolute;left: -100px;  top: 0px;'/>
+
 
 ---
 
@@ -22,11 +29,24 @@ class: middle, center
 
 ---
 ## Tentative d'épuisement d'un lieu parisien (1975)
-En octobre 1974, Georges Perec s'installe place Saint-Sulpice (Paris 6ième). 
-<img src='img_interlignes/georges_perec.jpg' width='20%'/>
+<br/>
+<table>
+
+<td>
+<tr>
+En octobre 1974, Georges Perec s'installe 
+place Saint-Sulpice (Paris 6ième). 
+<tr/>
+<tr>
+<tr/>
+<td/>
+<table/>
+
 
 Pendant trois jours d'affilée, il tente de prendre note de tout ce qu'il voit.
-<img src='img_interlignes/café_de_la_mairie.jpg' width='50%'/>
+
+<img src='img_interlignes/georges_perec.jpg' height='200px' style="align:right"/>
+<img src='img_interlignes/café_de_la_mairie.jpg' height='200px'/>
 
 Il en établit ainsi une liste représentant la vie quotidienne, sa monotonie, mais aussi les variations infimes du temps, de la lumière, du décor, du vivant.
 
@@ -59,70 +79,93 @@ Esquisse d'un inventaire de quelques-unes des choses strictement visibles :
 </i>
 
 ---
-## De Perec à Interlignes
-- mai 2017 : écriture du projet pour l'appel à projet Nuit Blanche Paris 2017
+# Les débuts du projet
+- mai 2017 : écriture du projet pour candidature à Nuit Blanche Paris 2017
 - fin juin : le projet est accepté !
-- mi-septembre 2017 : développement logiciel et contruction du dispositif materiel  
-- fin-septembre 2017 : premiers test et ajustements
-- 7 octobre 2017 : première diffusion aux Archives Nationales
+- mi-septembre 2017 : 
+  - développement logiciel
+  - contruction de la structure métalique
+  - premiers test et ajustements
+- 7 octobre 2017 : première diffusion aux Archives Nationales : 5000 spectateurs
 
----
+<!-- 
 # Plan
 - s'installer
 - observer les mouvements
-- mettre en lumière le texte
----
-## Installation vidéo
-prend place dans un 
-- espace urbain délimité par une zone rectangulaire
-- régie par un dispositif vidéo
-- caméra infrarouge + vidéoprojecteur
-- 
+- mettre en lumière le texte -->
+
 
 ---
-## Problématiques
--  angle de prise de vue de de projection en plongée
+# Intentions de l'installation
+- occuper un espace public qui reflète le texte (auto-référence)
+- créer une analogie entre marche et écriture
+- faire vivre une expérience de lecture aux passants
+  - rendre le texte lisible directement sur le sol
+  - révéler le texte sous les pas des spectateurs
+- nos trajectoires mises en lumière
+<!-- dispositif vidéo déployé dans un espace urbain -->
 
+---
+# Conditions de monstration
 
+Dispositif physique reposant sur une structure
+- placement en hauteur (8m -> image : l=8m, L=12m)
+- angle de prise de vue et de projection en plongée
+- déport au dessus du public
+
+Interaction du public
+- faible luminosité (nuit ou pénombre) pour rendre le texte lisible
+- espace au sol limité par une zone rectangulaire (12m x 8m minimum)
+- une vingtaine de personnes peuvent interagir simultanément 
+- une centaine peuvent circuler autour de la zone
+ 
+<!-- - caméra infrarouge  - vidéo-projecteur (5000 lumens) -->
+
+---
+# Fonctionnement du dispositif vidéo
+
+<!-- <center>
+</center> -->
+
+- captation par une caméra infrarouge placée en hauteur
+- algorithme d'analyse des mouvements
+- cheminements des passants associées à des zones de texte
+- mapping du texte au sol avec un vidéo-projecteur
+<img src='img_interlignes/vue_generale.png' width='50%' style='align:center'/>
 --- 
 
-# Dispositif physique
-
-Contraintes :
-- angle de prise de vue et de projection en plongée
-- déport de la captation et projection au dessus du public
-- placement en hauteur (8m -> image : l=8m, L=10m)
 
 ---
-
-## V1
-structure autoportée démontable
-- soudée sur mesure (Nicolas Gau)
+## Structure métalique autoportée (v1)
+<img src='img_interlignes/schema_structure_1b.png' width='100%'/>
+- soudée sur mesure
 - poids = 30kg
 - lestage = 120kg
 - temps de montage : 2h
-- certification sécurité
-
+- homologuée par le bureau ICE
 
 ---
 <img src='img_interlignes/schema_structure_1a.png' width='100%'/>
 
 ---
-<img src='img_interlignes/schema_structure_1b.png' width='100%'/>
-
----
 <img src='img_interlignes/photo_structure.png' width='100%'/>
 
 ---
-## V2 : simplifications
+class: split-40
+## Simplification du dispositf de projection (v2)
+.column[
 - projecteur posé a plat
 - miroir à ~45° devant l'objectif
 - possibilité de projeter derrière une fenêtre
 - amélioration de la sécurité et du déploiement
   - le VP peut être placé sur une simple table derrière une fenêtre
+]
+.column[
+  <img src='img_interlignes/schema_structure_2.jpeg'  width='50%'/>
+]
+
 
 ---
-<img src='img_interlignes/schema_structure_2.jpeg'  width='50%'/>
 
 ---
 # Dispositif vidéo
