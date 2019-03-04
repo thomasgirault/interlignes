@@ -79,14 +79,14 @@ Esquisse d'un inventaire de quelques-unes des choses strictement visibles :
 </i>
 
 ---
-# Les débuts du projet
-- mai 2017 : écriture du projet pour candidature à Nuit Blanche Paris 2017
+# 2017 : débuts du projet
+- mai : écriture d'un dossier de candidature pour Nuit Blanche Paris 2017
 - fin juin : le projet est accepté !
-- mi-septembre 2017 : 
+- mi-septembre : 
   - développement logiciel
   - contruction de la structure métalique
-  - premiers test et ajustements
-- 7 octobre 2017 : première diffusion aux Archives Nationales : 5000 spectateurs
+  - premiers tests et ajustements
+- 7 octobre : première diffusion aux Archives Nationales avec 5000 spectateurs
 
 <!-- 
 # Plan
@@ -100,13 +100,16 @@ Esquisse d'un inventaire de quelques-unes des choses strictement visibles :
 - occuper un espace public qui reflète le texte (auto-référence)
 - créer une analogie entre marche et écriture
 - faire vivre une expérience de lecture aux passants
-  - rendre le texte lisible directement sur le sol
-  - révéler le texte sous les pas des spectateurs
-- nos trajectoires mises en lumière
+  - lecture directement sur le sol
+  - le texte de révèle sous les pas des spectateurs
+- mettre en lumière nos trajectoires
+- la technique est un moyen, pas un but
+
+
 <!-- dispositif vidéo déployé dans un espace urbain -->
 
 ---
-# Conditions de monstration
+# Conditions pour jouer en public
 
 Dispositif physique reposant sur une structure
 - placement en hauteur (8m -> image : l=8m, L=12m)
@@ -127,10 +130,12 @@ Interaction du public
 <!-- <center>
 </center> -->
 
-- captation par une caméra infrarouge placée en hauteur
+- captation par un capteur infrarouge placé en hauteur
 - algorithme d'analyse des mouvements
 - cheminements des passants associées à des zones de texte
-- mapping du texte au sol avec un vidéo-projecteur
+- projection au sol avec un vidéo-projecteur
+- mapping pour faire correspondre les trajectoires captées aux cheminements réels
+
 <img src='img_interlignes/vue_generale.png' width='50%' style='align:center'/>
 --- 
 
@@ -154,48 +159,59 @@ Interaction du public
 class: split-40
 ## Simplification du dispositf de projection (v2)
 .column[
-- projecteur posé a plat
-- miroir à ~45° devant l'objectif
-- possibilité de projeter derrière une fenêtre
+- projecteur posé a plat avec un miroir à ~45° devant l'objectif
 - amélioration de la sécurité et du déploiement
   - le VP peut être placé sur une simple table derrière une fenêtre
 ]
 .column[
   <img src='img_interlignes/schema_structure_2.jpeg'  width='50%'/>
 ]
-
-
 ---
 
 ---
 # Dispositif vidéo
 ### V1 : caméra Kinect
-Libfreenect2 avec Kernel Density Estimation (captation à 15m au lieu de 5m)
-
-Complémentarité des flux 3d et infrarouge
+Libfreenect2
+- Kernel Density Estimation : hack pour capter à 15m au lieu de 5m :)
+- détection simultanée et complémentaire des flux 3d et infrarouges
 
 <img src='img_interlignes/libfreenect2_kde.png' width='100%'/>
+
+limitations
+- conditions atmosphériques (bruit généré par la pluie)
+- résolution (640 x 480)
+- transfert USB : ralonge 5m max
 
 [https://arxiv.org/abs/1608.05209](Efficient Multi-Frequency Phase Unwrapping using Kernel Density Estimation (Järemo Lawin et al. 2016))
 
 ---
-### V2 : caméra + projecteur infrarouges
-  - Rapberry-PI + module caméra IR 
-  - filtre la lumière visible (< 780nm)
-  - projecteurs IR pour éclairer la zone de captation 
-  - la caméra peut être placée a une hauteur beaucoup plus importante (> 15m)
-
+### V2 : caméra IR + projecteur IR
+- Caméra vidéosurveillance wifi : Rapberry-PI + module caméra infrarouge … meilleur contraste et résolution
+- filtrage la lumière visible (< 780nm) pour limiter les flux parasites et le texte projeté
+- placement possible a une hauteur beaucoup plus importante (> 15m), une surface d'interaction étendue sans utilisation d'une perche
+- multiple projecteurs IR pour éclairer plus précisément la zone de captation
 
 ---
 class: top, left
-### Remote control
+### Controle de l'application
 <img src='/img_interlignes/telecommande_image.png'/>
 <img src='img_interlignes/telecommande_text.png'/>
-- simple page web pour contrôler les paramètres de l'application
-- paramètres liés à la captation
-- ou a la typographie
 
+Simple page web pour piloter l'API rest depuis un smartphone (dat.gui) au milieu du public
 
+#### paramètres liés à la captation
+- contraste, luminosité caméra
+- choix algo de détection (BG substraction)
+- morphologie
+- nombre limite de blobs pour faire apparaitre/disparaitre une trajectoire
+- distance max entre blob candidat et prédiction
+
+### paramètres typographiques
+- taille (min/max) du texte
+- influence vélocité
+- espacement entre mots et lettres (kerning)
+- insertion de ponctuation pour limiter la taille du texte
+- déclanchement d'interludes video
 
 
 ---
@@ -204,17 +220,16 @@ class: top, left
 
 ## prétraitements de l'image 
 
-background substraction V1
+### background substraction V1
 - image de référence : scène vide
-- soustraction avec image courante
-- la différence fait apparaître des objets inexistants
+- soustraction avec image courante pour mettre en évidence les objets en déplacement
 
-background substraction V2
+### background substraction V2
 - historique des pixels calculée dynamiquement
 - remplace l'image de référence
 - améliorations en condition de pluie et de luminosité changeante
 
-Faible coût calculatoire par rapport a des techniques de deep learning
+Faible coût calculatoire (50hz) vs algo deep learning (tiny yolov3 : 2hz)
 
 ---
 name: preprocessing
@@ -225,14 +240,19 @@ class: center, middle
 ---
 
 ## Détection de blobs
-- binarisation de l'image soustraite à l'aide de seuils
+- binarisation de l'image soustraite par amplification du contraste
 - recherche des contours des formes
+- filtres morphologiques : suppression des pixels isolés et amplification des autres formes pour fusionner les blobs contigus
 - calcul des *bounding boxes* enveloppant ces formes
 
-Comment determiner qu'une forme à t=i est la même à t=i+1 ?
+On doit maintenant analyser l'évolution de ces formes au cours du temps pour les associer à des trajectoires
+
+
 
 ---
 ## Algorithme de tracking
+Comment determiner qu'une forme à t=i est la même à t=i+1 ?
+
 Realtime multiple object tracking (MOT)
 
 ---
@@ -246,7 +266,7 @@ T
 
 - mise a jour la cible avec la détection qui lui est associée
 - paramètres de vitesse résolus par le filtre de Kalman
-- cible prédite si pas d association satisfaisante
+- cible prédite si pas d'association satisfaisante (erreurs de détection)
 
 
 - In assigning detections to existing targets, each target’s
@@ -284,83 +304,117 @@ Lien vidéo YouTube ?
 [http://arxiv.org/abs/1602.00763](Simple online and realtime tracking (Bewley et al., 2016))
 
 
-## Filtres de Kalman
+## Filtres de Kalman pour la prédiction de trajectoires
 Utilisé pour l approximation et la prédiction de trajectoire
+
+- si erreur de détection, 
 - librairie FilterPy
 
 ## Algorithme hongrois
-
-Pour chaque nouvelle image on regarde quel filtre prédit le mieux la position de chaque blob candidat
-
+Pour chaque nouvelle image on recherche quel filtre prédit le mieux la position de chaque blob candidat
 
 - algorithme d'optimisation combinatoire
 - résout le problème d'affectation en temps polynomial
 - trouve un couplage parfait de poids maximum dans un graphe biparti dont les arêtes sont valuées
 
-
 ### Algorithme des K plus proches voisins 
 - ré-identifier les corps qui ont disparu du champ de la caméra
-
-
 
 Un algorithme de machine learning analyse chaque corps en mouvement pour identifier une trajectoire qui deviendra une zone d’apparition du texte.
 
 
-
 ---
 # Génération du texte
-- Utilisation des zones identifiées comme des corps en mouvement
-- zones d'appartition du texte
-- la taille du texte est fonction de l accélération
-- l'orientation du texte s adapté au chemin choisi
+- les trajectoires calculées sont transmises a une appli web en websockets
+- le corpus est découpé en énoncés qui seront "consommés" au fur et a mesure par chaque marcheur
+- taille du texte est fonction de l accélération
+- orientation du texte adapté a la trajectoire
 
+A la fin d'un chapitre, une interlude vidéo est projetée
 
 
 ---
 # Projection mapping
-- pour faire apparaitre le texte sous les pas des marcheurs
+
 - besoin de faire correspondre la zone de projection et celle de captation
+- pour faire apparaitre le texte sous les pas des marcheurs
 - propriétés CSS pour inscrire un canvas sur un quad 3d dont on peut changer la forme
 - synchronisation des coordonnées source/cible a travers le localstorage du navigateur
 
 Demo
 
+---
+# Conclusion et perspectives
+
+Interlignes : une pièce de art numérique qui invite a partager la lecture d'un texte dans l'espace public
+
+- mise en lumière d'un texte de Georges Perec sur les situations infra-ordinaires du quotidien
+
+
+- version initiale réalisée en 3 semaines
+- detourne des techniques de vidéo-surveillance
+- captation, détection et tracking de foule dans l'espace public
+- techniques issues du web pour l' "expérience spectateur"
+---
+
+# Prochain temps fort
+Saint-Petersbourg, septembre 2019
+- Bibliothèque Nationale : représentation d'un texte de Voltaire
+- Workshop au théâtre Alexandersky
+
 
 
 ---
-# Perspectives
+## Simplifications du déploiement materiel
+- déploiement et exploitation possible pour un non expert
+- réduction du temps de montage
+- utilisation de projecteurs plus puissants pour une plus grande surface d'interaction
+- portage de l'application de détection sur Raspberry Pi ou smartphone Android équipé d'un caméra infrarouge
+
+
 
 ---
-## Simplification et optimisation
-- packaging
-- portage de l'application de détection sur Raspberry Pi
-- portage sur smartphone équipé d'un caméra infrarouge
-
----
-## Mutli-caméras et multi-projection
-- déployer le dispositif sur toute une rue
+### Enrichissement du corpus
+- développement d'une api pour capter les contributions au texte par le public
+- sms, réseaux sociaux ?
+- travail sur le texte avec d'autres auteurs (marginalias Voltaire, bibliothèque Nationale de Russie)
 
 ---
 
+### Mapping automatique
+objectifs : 
+- réduire le temps de calibration caméra-projecteur critique
+- confier le déploiement à un non spécialiste 
+
+- spatial scanning : projection/captation de patterns pour la calibration automatique de la géométrie du mapping
+
 ---
 
-# Mapping automatique
-    - le temps de calibration caméra-projecteur est critique
-    - techniques de spatial scanning : adaptation de la géométrie projection de patterns (échiquier) sur la zone de captation
----
-# Déploiement physique
-  - réduction du temps de montage
-  - utilisation d'autres projecteurs
----
-# Amélioration de la captation
-  - optimiser l'utilisation de projecteurs infrarouge
-  - filtrage de la lumière visible
 
+---
+### Amélioration de la captation
+- optimiser l'utilisation de projecteurs infrarouge
+- amélioration du filtrage de la lumière visible
+- mutli-caméras et multi-projecteurs :
+déploiement du dispositif sur toute une rue
+
+### Amélioration de la détection
+- deep learning sur architecture mobile ? mobilenet, posenet, bodypix
+- nécessite un jeu de données spécifique a Interlignes : acquisition possible le avec l'algo de détection actuel
+
+<Img SRC='https://cdn-images-1.medium.com/max/1600/0*XFNP9bXsLLO1flx7' />
+
+### Améliorations du rendu
+- moteur physique pour le rendu du texte
+- effets typographiques : envolées et disparition sélectives des lettres/mots
+- rendre le texte plus lisible quand le contenu est abondant
+- repositionner légèrement les lignes les unes par rapport aux autres
+- couleurs ?
+- inviter a interagir lorsque l'espace est vide (interludes vidéo ?)
 
 ---
 # La Sophiste
-
-
+Artisans bricoleurs de l irréel
 
 ---
 ## Architecture logicielle
