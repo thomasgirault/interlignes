@@ -66,6 +66,12 @@ li:before {
 .center p {
   display: inline-block;
 }
+
+.corpus {
+  font-size: 18pt;
+  display: inline-block;
+}
+
 .md-logo, .webpack-logo {
   display: inline-block;
 }
