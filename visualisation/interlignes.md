@@ -1,6 +1,7 @@
 <!-- class: center, middle -->
 # Interlignes
-##Installation vidéo participative
+####Installation vidéo participative
+#### La Sophiste
 <br/>
 Thomas Girault thomas@girault.fr
 <br/>
@@ -9,25 +10,26 @@ Mitch Fournial mitch@lasophiste.com
 http://www.lasophiste.com/portfolio/interlignes/
 <br/>
 https://github.com/thomasgirault/interlignes
+
 ---
+
 <!-- class: center, middle -->
-<img src='img_interlignes/interlignes.jpg' width='120%' style='position: absolute;left: -100px;  top: 0px;'/>
+<!-- <img src='img_interlignes/interlignes.jpg' width='120%' style='position: absolute;left: -100px;  top: 0px;'/> -->
 
 <!-- http://bredechas2017.blogspot.com/2017/04/170428-lml-georges-perec-ses-vies-mode.html -->
 <!-- class: left, middle  -->
 <!-- background-size: cover -->
 
----
 
-<img src='img_interlignes/interlignes_archives_02.jpg' width='115%' style='position: absolute;left: -100px;  top: 0px;'/>
+<img src='img_interlignes/interlignes_archives_02.jpg' width='115%' style='position: absolute;left: -120px;  top: -200px;'/>
 
-
----
-
-class: middle, center
-<iframe width="100%" height="100%" src="https://www.youtube.com/embed/YD09Kl0sIQc" frameborder="0" allow="encrypted-media" allowfullscreen></iframe>
 
 ---
+<video controls style='position: absolute;left: -60px;  top: 0px;'>
+  <source src="img_interlignes/Interlignes.mp4" type="video/mp4">
+</video>
+---
+
 ## Tentative d'épuisement d'un lieu parisien (1975)
 <br/>
 <table>
@@ -108,167 +110,208 @@ Esquisse d'un inventaire de quelques-unes des choses strictement visibles :
 
 <!-- dispositif vidéo déployé dans un espace urbain -->
 
+
+ 
+<!-- - caméra infrarouge  - vidéo-projecteur (5000 lumens) -->
+
 ---
-# Conditions pour jouer en public
+class:center, middle
+# Fonctionnement du dispositif vidéo
+
+---
+# Dispositif vidéo
+
+<!-- <center>
+</center> -->
+
+- capteur infrarouge placé en hauteur
+- algorithme d'analyse de mouvements
+- cheminements des passants associées à des zones de texte
+- projection mapping au sol avec un vidéo-projecteur
+
+<img src='img_interlignes/vue_generale.png' width='50%' style='align:center'/>
+--- 
 
 Dispositif physique reposant sur une structure
 - placement en hauteur (8m -> image : l=8m, L=12m)
 - angle de prise de vue et de projection en plongée
 - déport au dessus du public
 
-Interaction du public
-- faible luminosité (nuit ou pénombre) pour rendre le texte lisible
-- espace au sol limité par une zone rectangulaire (12m x 8m minimum)
-- une vingtaine de personnes peuvent interagir simultanément 
-- une centaine peuvent circuler autour de la zone
- 
-<!-- - caméra infrarouge  - vidéo-projecteur (5000 lumens) -->
-
----
-# Fonctionnement du dispositif vidéo
-
-<!-- <center>
-</center> -->
-
-- captation par un capteur infrarouge placé en hauteur
-- algorithme d'analyse des mouvements
-- cheminements des passants associées à des zones de texte
-- projection au sol avec un vidéo-projecteur
-- mapping pour faire correspondre les trajectoires captées aux cheminements réels
-
-<img src='img_interlignes/vue_generale.png' width='50%' style='align:center'/>
---- 
 
 
 ---
-## Structure métalique autoportée (v1)
-<img src='img_interlignes/schema_structure_1b.png' width='100%'/>
+
+# Structure métalique autoportée (v1)
+.column[
+<img src='img_interlignes/schema_structure_1ba.png' width='100%' style='position: absolute;left: 0px;  top: 150px; z-index:0'/>
+]
+<div style='position: absolute;right: -110px;  bottom: 200px; z-index:0'>
+</div>
+.right[
+<br><br><br><br><br><br><br>
 - soudée sur mesure
 - poids = 30kg
 - lestage = 120kg
 - temps de montage : 2h
 - homologuée par le bureau ICE
 
+]
 ---
-<img src='img_interlignes/schema_structure_1a.png' width='100%'/>
+<img src='img_interlignes/schema_structure_1a.png' class="fullscreen-100"/>
 
 ---
-<img src='img_interlignes/photo_structure.png' width='100%'/>
+<img src='img_interlignes/photo_structure.png' class="fullscreen-100"/>
 
 ---
 class: split-40
 ## Simplification du dispositf de projection (v2)
 .column[
-- projecteur posé a plat avec un miroir à ~45° devant l'objectif
-- amélioration de la sécurité et du déploiement
-  - le VP peut être placé sur une simple table derrière une fenêtre
+  <img src='img_interlignes/schema_structure_2.jpeg' width='100%'/>
 ]
 .column[
-  <img src='img_interlignes/schema_structure_2.jpeg'  width='50%'/>
+  <br>
+- projecteur posé a plat 
+- miroir à 45° devant l'objectif
+- structure placée derrière une fenêtre
+- amélioration de la sécurité
+- simplification du déploiement
 ]
 ---
 
----
-# Dispositif vidéo
-### V1 : caméra Kinect
-Libfreenect2
-- Kernel Density Estimation : hack pour capter à 15m au lieu de 5m :)
-- détection simultanée et complémentaire des flux 3d et infrarouges
-
-<img src='img_interlignes/libfreenect2_kde.png' width='100%'/>
-
+## Captation v1 : Kinect + Libfreenect2
+- kernel density estimation : captation à 15m au lieu de 5m :)
+- détection simultanée et complémentaire des flux 3d et IR
+.center[
+<img src='img_interlignes/depth_ir.jpg' width="25%"/>
+<img src='img_interlignes/depth_mask.jpg'  width="25%"/>
+<img src='img_interlignes/kinect_depth_interlignes.png' width="25%"/>
+]
 limitations
-- conditions atmosphériques (bruit généré par la pluie)
-- résolution (640 x 480)
-- transfert USB : ralonge 5m max
+- bruit généré par le capteur
+- conditions atmosphériques (pluie)
+- USB : ralonge 5m max
 
-[https://arxiv.org/abs/1608.05209](Efficient Multi-Frequency Phase Unwrapping using Kernel Density Estimation (Järemo Lawin et al. 2016))
+<!-- - résolution (640 x 480) -->
+<!-- <img src='img_interlignes/libfreenect2_kde.png' width='100%'/> -->
 
----
-### V2 : caméra IR + projecteur IR
-- Caméra vidéosurveillance wifi : Rapberry-PI + module caméra infrarouge … meilleur contraste et résolution
-- filtrage la lumière visible (< 780nm) pour limiter les flux parasites et le texte projeté
-- placement possible a une hauteur beaucoup plus importante (> 15m), une surface d'interaction étendue sans utilisation d'une perche
-- multiple projecteurs IR pour éclairer plus précisément la zone de captation
+[Efficient Multi-Frequency Phase Unwrapping using Kernel Density Estimation (Järemo Lawin et al. 2016)](https://arxiv.org/abs/1608.05209)
 
 ---
-class: top, left
-### Controle de l'application
-<img src='/img_interlignes/telecommande_image.png'/>
-<img src='img_interlignes/telecommande_text.png'/>
-
-Simple page web pour piloter l'API rest depuis un smartphone (dat.gui) au milieu du public
-
-#### paramètres liés à la captation
-- contraste, luminosité caméra
-- choix algo de détection (BG substraction)
-- morphologie
-- nombre limite de blobs pour faire apparaitre/disparaitre une trajectoire
-- distance max entre blob candidat et prédiction
-
-### paramètres typographiques
-- taille (min/max) du texte
-- influence vélocité
-- espacement entre mots et lettres (kerning)
-- insertion de ponctuation pour limiter la taille du texte
-- déclanchement d'interludes video
-
+class: split-40
+<!-- - caméra vidéosurveillance wifi : Rapberry-PI + module caméra infrarouge -->
+### Captation v2 : Rapberry caméra IR + projecteur IR
+.column[
+<img src='img_interlignes/raspicam.png' width="130%"/>
+]
+.column[
+  <br>
+- image de meilleure qualité
+- éclairage avec plusieurs projecteurs IR
+- filtre lumière visible (< 780nm)
+    - flux parasites et texte projeté
+- hauteur plus importante (> 15m) 
+    - surface d'interaction étendue
+    - déport caméra facultatif
+- WiFi ou ethernet
+]
 
 ---
+class:center, middle
+# Cartographier les trajectoires en temps réel 
+
+---
+class: split-40
 # Détection et tracking du public
-## cartographier des déplacements en temps réel  
+.column[
+<img src='img_interlignes/cv_pipeline.png' width="70%"/>
+]
+.column[
+  <br><br>
+prétraitements
+  - background substraction
+  - détection de formes
 
-## prétraitements de l'image 
+<br>
 
-### background substraction V1
-- image de référence : scène vide
-- soustraction avec image courante pour mettre en évidence les objets en déplacement
+tracking vidéo
+  * analyse prédictive du déplacement
+  * identification des objets 
+]
+---
+## Background substraction 
+<table>
+<tbody>
+<tr>
+<td>image courante</td>
+<td>- référence</td>
+<td> = objets</td>
+</tr>
+<tr>
+<td><img src='img_interlignes/raspicam.png' width="70%"/></td>
+<td><img src='img_interlignes/depth_ir_rpi.jpg' width="110%"/></td>
+<td><img src='img_interlignes/bg_substract_demo.png' width="90%"/></td>
+</tr>
+</tbody>
+</table>
 
-### background substraction V2
-- historique des pixels calculée dynamiquement
-- remplace l'image de référence
-- améliorations en condition de pluie et de luminosité changeante
+- estimation d'une "image" de référence = scène vide
+- "soustraction" avec image courante
+- mise en évidence de formes à détecter
+  
 
-Faible coût calculatoire (50hz) vs algo deep learning (tiny yolov3 : 2hz)
+
+<!-- - améliorations en condition de pluie et de luminosité changeante -->
+<!-- ### background substraction V2 -->
+
 
 ---
 name: preprocessing
-class: center, middle
-#
-<img src="http://localhost:8888/video_feed" id="kinect" height="100%">
+
+<img src="http://localhost:8888/video_feed" id="kinect" height="100%" class="fullscreen-100">
+
 
 ---
 
 ## Détection de blobs
 - binarisation de l'image soustraite par amplification du contraste
 - recherche des contours des formes
-- filtres morphologiques : suppression des pixels isolés et amplification des autres formes pour fusionner les blobs contigus
+- fusion de blobs contigus avec filtres morphologiques : 
+  - érosion des pixels isolés
+  - dilatation des formes contigues
 - calcul des *bounding boxes* enveloppant ces formes
 
-On doit maintenant analyser l'évolution de ces formes au cours du temps pour les associer à des trajectoires
+Comment analyser l'évolution de ces formes au cours du temps ?
 
-
-
----
-## Algorithme de tracking
-Comment determiner qu'une forme à t=i est la même à t=i+1 ?
-
-Realtime multiple object tracking (MOT)
+ <!-- pour les associer à des trajectoires
+Comment determiner qu'une forme aun temps t=i est la même à t=i+1 ? -->
 
 ---
-## Algorithme SORT
-Chaque cible (bounding box) est représentée par un état
+## Tracking d'objets disincts en temps réél
+[Simple online and realtime tracking (Bewley et al., 2016)](http://arxiv.org/abs/1602.00763)
 
-x = [u, v, s, r, u', v', s']
-T
-- u et v : position du centre
-- s et r : aire et ratio
+Un objet détecté est associé à un état $x = [u, v, s, r, u', v', s']$
+  - $u,v$ : position du centre de la *Bounding Box*
+  - $s$ et $r$ : aire et ratio de la BB
+  - $u', v', s'$ prédictions de la position et aire suivante
 
-- mise a jour la cible avec la détection qui lui est associée
-- paramètres de vitesse résolus par le filtre de Kalman
-- cible prédite si pas d'association satisfaisante (erreurs de détection)
+Filtre de Kalman : estimation de trajectoires candidates
+  - prédiction : estimation de l'état courant avec l'état estimé précédemment
+  - mise à jour : correction de l'état prédit avec observation courante
+
+Algorithme hongrois : couplage optimal entre prédictions et observations
+
+<!-- ---
+## Tracking dans des séries bruitées et incomplètes
 
 
+- mise à jour de l'état courant avec
+  - objet nouvellement détecté si proche de la prédiction
+  - objet prédit si pas d'association satisfaisante (bruit) -->
+
+<!-- Faible coût calculatoire (25 FPS) vs algo deep learning (tiny yolo v3 : 2 FPS) -->
+
+<!-- - paramètres de vitesse résolus par le filtre de Kalman -->
+<!-- 
 - In assigning detections to existing targets, each target’s
 bounding box geometry is estimated by predicting its new
 location in the current frame.
@@ -299,136 +342,174 @@ frames.
 
 
 Lien vidéo YouTube ?
-- 10x plus rapide que les autres algos de tracking (250hz)
-
-[http://arxiv.org/abs/1602.00763](Simple online and realtime tracking (Bewley et al., 2016))
+- 10x plus rapide que les autres algos de tracking (250hz) -->
 
 
-## Filtres de Kalman pour la prédiction de trajectoires
-Utilisé pour l approximation et la prédiction de trajectoire
 
-- si erreur de détection, 
-- librairie FilterPy
-
-## Algorithme hongrois
-Pour chaque nouvelle image on recherche quel filtre prédit le mieux la position de chaque blob candidat
-
-- algorithme d'optimisation combinatoire
-- résout le problème d'affectation en temps polynomial
-- trouve un couplage parfait de poids maximum dans un graphe biparti dont les arêtes sont valuées
-
-### Algorithme des K plus proches voisins 
+<!-- - si erreur de détection, 
+- librairie FilterPy -->
+<!-- ### Algorithme des K plus proches voisins 
 - ré-identifier les corps qui ont disparu du champ de la caméra
 
-Un algorithme de machine learning analyse chaque corps en mouvement pour identifier une trajectoire qui deviendra une zone d’apparition du texte.
+Un algorithme de machine learning analyse chaque corps en mouvement pour identifier une trajectoire qui deviendra une zone d’apparition du texte. -->
+
+
+---
+class: center, middle
+# Interaction avec le public
+
+---
+# Conditions pour jouer en public
+- faible luminosité (nuit ou pénombre) pour rendre le texte lisible
+- espace au sol limité par une zone rectangulaire (12m x 8m minimum)
+- une vingtaine de personnes peuvent interagir simultanément 
+- une centaine peuvent circuler autour de la zone
+
+---
+### Contrôle de l'application
+Paramètres liés à la captation
+.column[
+<img src='/img_interlignes/telecommande_image.png' width='70%'/>
+]
+.column[
+- contraste, luminosité caméra
+- choix algo de détection (BG substraction)
+- morphologie
+- nombre limite de blobs pour faire apparaitre/disparaitre une trajectoire
+- distance max entre blob candidat et prédiction
+]
+
+---
+### Contrôle de l'application
+Paramètres typographiques
+.column[
+<img src='img_interlignes/telecommande_text.png' width='70%'/>
+]
+.column[
+- taille (min/max) du texte
+- influence vélocité
+- espacement entre mots et lettres (kerning)
+- insertion de ponctuation pour limiter la taille du texte
+- déclanchement d'interludes video
+]
 
 
 ---
 # Génération du texte
-- les trajectoires calculées sont transmises a une appli web en websockets
-- le corpus est découpé en énoncés qui seront "consommés" au fur et a mesure par chaque marcheur
+Application Web
+- trajectoires transmises via websockets
+- corpus découpé en énoncés
+- chaque marcheur "consomme" le texte au fur et à mesure
 - taille du texte est fonction de l accélération
 - orientation du texte adapté a la trajectoire
+- interludes vidéo projetées entres les chapitres
 
-A la fin d'un chapitre, une interlude vidéo est projetée
-
+<!-- HTML, CSS, JS
+- tracés typographiques : canvas avec javascript  
+- communication websockets (coordonnées de déplacement)
+- module de mapping en CSS --> 
 
 ---
 # Projection mapping
+Comment le texte aparaît-il sous les pas des marcheurs ?
 
-- besoin de faire correspondre la zone de projection et celle de captation
-- pour faire apparaitre le texte sous les pas des marcheurs
-- propriétés CSS pour inscrire un canvas sur un quad 3d dont on peut changer la forme
-- synchronisation des coordonnées source/cible a travers le localstorage du navigateur
-
-Demo
+Outil de pour faire correspondre projection et captation
+  - propriétés CSS pour inscrire un canvas sur un quad 3d dont on peut changer la forme
+  - synchronisation des coordonnées source/cible a travers le localstorage du navigateur
 
 ---
 # Conclusion et perspectives
 
-Interlignes : une pièce de art numérique qui invite a partager la lecture d'un texte dans l'espace public
+- Interlignes invite à découvrir la lecture d'un texte dans l'espace public
+  - partage d'une experience sensible
+- mise en lumière d'un texte de Georges Perec
+  - sigularité des situations infra-ordinaires
+  - auto-référence : lire dans la rue un texte qui parle de la rue
 
-- mise en lumière d'un texte de Georges Perec sur les situations infra-ordinaires du quotidien
-
-
+---
+Réalisation technique
 - version initiale réalisée en 3 semaines
-- detourne des techniques de vidéo-surveillance
-- captation, détection et tracking de foule dans l'espace public
-- techniques issues du web pour l' "expérience spectateur"
----
-
-# Prochain temps fort
-Saint-Petersbourg, septembre 2019
-- Bibliothèque Nationale : représentation d'un texte de Voltaire
-- Workshop au théâtre Alexandersky
-
-
+- detourne des techniques de vidéo-surveillance : 
+  - captation, détection et tracking de foule dans l'espace public
+- techniques issues du web au service d'une "expérience spectateur"
 
 ---
-## Simplifications du déploiement materiel
-- déploiement et exploitation possible pour un non expert
-- réduction du temps de montage
-- utilisation de projecteurs plus puissants pour une plus grande surface d'interaction
-- portage de l'application de détection sur Raspberry Pi ou smartphone Android équipé d'un caméra infrarouge
-
-
-
+class:center, middle
+## Travaux en cours et perspectives
+---
+## написанное между строк
+Prochain temps fort : Saint-Petersbourg, septembre 2019
+- Bibliothèque Nationale : corpus des des Marginalia de Voltaire
+- Medialab Alexandrinsky : organisation et animation d'un workshop
+.center[
+<img src='img_interlignes/marginalia.jpg' width='50%'/>
+  ]
 ---
 ### Enrichissement du corpus
-- développement d'une api pour capter les contributions au texte par le public
-- sms, réseaux sociaux ?
-- travail sur le texte avec d'autres auteurs (marginalias Voltaire, bibliothèque Nationale de Russie)
-
----
-
-### Mapping automatique
-objectifs : 
-- réduire le temps de calibration caméra-projecteur critique
-- confier le déploiement à un non spécialiste 
-
-- spatial scanning : projection/captation de patterns pour la calibration automatique de la géométrie du mapping
-
----
-
+- ouverture du texte au public
+  - ateliers d'écriture en milieu scolaire
+  - api pour collecter les contributions : sms, réseaux sociaux ?
 
 ---
 ### Amélioration de la captation
 - optimiser l'utilisation de projecteurs infrarouge
 - amélioration du filtrage de la lumière visible
 - mutli-caméras et multi-projecteurs :
-déploiement du dispositif sur toute une rue
+  - déploiement du dispositif sur toute une rue
 
+---
+class: split-40
 ### Amélioration de la détection
-- deep learning sur architecture mobile ? mobilenet, posenet, bodypix
-- nécessite un jeu de données spécifique a Interlignes : acquisition possible le avec l'algo de détection actuel
-
-<Img SRC='https://cdn-images-1.medium.com/max/1600/0*XFNP9bXsLLO1flx7' />
-
-### Améliorations du rendu
+.column[
+<img src='img_interlignes/bodypix.gif' width='100%'/>
+]
+.column[
+  <br>
+deep learning sur architecture mobile :  
+- mobilenet, posenet, bodypix
+  
+génération jeu de données spécifique avec l'algo de détection actuel
+]
+---
+### Amélioration du rendu et de l'interaction
 - moteur physique pour le rendu du texte
-- effets typographiques : envolées et disparition sélectives des lettres/mots
 - rendre le texte plus lisible quand le contenu est abondant
-- repositionner légèrement les lignes les unes par rapport aux autres
-- couleurs ?
+  - effets typographiques : envolées et disparition sélectives des lettres/mots
+  - repositionner légèrement les lignes les unes par rapport aux autres
+  - couleurs ?
 - inviter a interagir lorsque l'espace est vide (interludes vidéo ?)
 
----
-# La Sophiste
-Artisans bricoleurs de l irréel
+
 
 ---
-## Architecture logicielle
+### Simplification du déploiement materiel
+- déploiement et exploitation possible pour un non expert
+- réduction du temps de montage
+- utilisation de projecteurs plus puissants pour une plus grande surface d'interaction
+- portage de l'application de détection sur Raspberry Pi ou smartphone Android équipé d'un caméra infrarouge
+
+---
+### Projection mapping automatique par spatial scanning 
+- projection/captation de patterns pour la calibration automatique de la géométrie du mapping
+- réduire le temps de calibration caméra-projecteur
+- confier le déploiement à un non spécialiste 
+
+
+
+---
+class: left, middle
+
+<img src='img_interlignes/merci.png' width='110%' style='position: absolute;left: -100px;  top: 0px;'>
+
+
+<!-- ## Architecture logicielle
 ### Technos utilisées :
 Backend : Python
 - serveur Web : sanic (libuv)
 - OpenCV 4 : prétraitement de l'image 
 - machine learning : FilterPy, Scikit-Learn
 
-Front-end : HTML, CSS, JS
-- tracés typographiques : canvas avec javascript  
-- communication websockets (coordonnées de déplacement)
-- module de mapping en CSS
-
+Front-end :  --> 
 
 
 
