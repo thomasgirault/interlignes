@@ -9,8 +9,26 @@ document.getElementById('source').innerHTML = require('../interlignes.md')
 
 slideshow = remark.create({
   // see https://github.com/gnab/remark/wiki/Configuration
-  highlightLines: true
+  highlightLines: true,
+  ratio: "16:9"
 })
+
+
+// $(function () {
+//   setRemarkSizes();
+//   $(window).resize(function () {
+//     setRemarkSizes();
+//   });
+// });
+
+// //take care of IE problem and resizing
+// function setRemarkSizes() {
+//   $('.remark-slide-scaler').height($(window).height())
+//     .width($(window).width())
+//     .css('top', '0px')
+//     .css('left', '0px')
+//     .css('-webkit-transform', 'none');
+// }
 
 slideshow.on('showSlide', function (slide) {
   console.log(slide);
@@ -25,7 +43,7 @@ function set_param(param, value) {
   var url = "http://localhost:8888/param"
   $.ajax({
     type: "POST",
-    url: url + "/" + param + "/" +  value,
+    url: url + "/" + param + "/" + value,
     data: JSON.stringify({ n: Math.round(value) }),
     contentType: "application/json; charset=utf-8",
     dataType: "json",
