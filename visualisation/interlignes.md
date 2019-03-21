@@ -31,28 +31,19 @@ https://github.com/thomasgirault/interlignes
 ---
 
 ## Tentative d'épuisement d'un lieu parisien (1975)
-<br/>
-<table>
+En octobre 1974, Georges Perec s'installe place Saint-Sulpice (Paris 6ième) 
 
-<td>
-<tr>
-En octobre 1974, Georges Perec s'installe 
-place Saint-Sulpice (Paris 6ième). 
-<tr/>
-<tr>
-<tr/>
-<td/>
-<table/>
-
-
-Pendant trois jours d'affilée, il tente de prendre note de tout ce qu'il voit.
-
+Pendant trois jours d'affilée, il tente de prendre note de tout ce qu'il voit
+.center[
 <img src='img_interlignes/georges_perec.jpg' height='200px' style="align:right"/>
 <img src='img_interlignes/café_de_la_mairie.jpg' height='200px'/>
+]
 
 Il en établit ainsi une liste représentant la vie quotidienne, sa monotonie, mais aussi les variations infimes du temps, de la lumière, du décor, du vivant.
 
 ---
+
+<div class='corpus'>
 <i>
 Esquisse d'un inventaire de quelques-unes des choses strictement visibles : 
 <br/>...
@@ -79,92 +70,84 @@ Esquisse d'un inventaire de quelques-unes des choses strictement visibles :
 <br/>Exigez le Roquefort Société le vrai dans son ovale vert 
 <br/>...
 </i>
+</div>
+
+---
+# Projet artistique
+la rue libère le texte de sa page
+- mise en mots de l'environement que nous traversons et qui nous traverse
+- mise en espace des mots que porte l'environement
+- la marche comme écriture (Oulipo)
+
+la lecture fabrique une expérience sociale 
+- le texte est mis en lumière par nos trajectoires
+- sa lecture développe une interaction sociale
 
 ---
 # 2017 : débuts du projet
 - mai : écriture d'un dossier de candidature pour Nuit Blanche Paris 2017
-- fin juin : le projet est accepté !
-- mi-septembre : 
-  - développement logiciel
-  - contruction de la structure métalique
-  - premiers tests et ajustements
-- 7 octobre : première diffusion aux Archives Nationales avec 5000 spectateurs
-
-<!-- 
-# Plan
-- s'installer
-- observer les mouvements
-- mettre en lumière le texte -->
-
+- fin juin : projet retenu !
+- septembre : 
+  - développement logiciel (10j)
+  - contruction de la structure métalique (5j)
+  - premiers tests et ajustements (3j)
+- 7 octobre - diffusion aux Archives Nationales - 5000 spectateurs  
 
 ---
-# Intentions de l'installation
-- occuper un espace public qui reflète le texte (auto-référence)
-- créer une analogie entre marche et écriture
-- faire vivre une expérience de lecture aux passants
-  - lecture directement sur le sol
-  - le texte de révèle sous les pas des spectateurs
-- mettre en lumière nos trajectoires
-- la technique est un moyen, pas un but
+## Mise en oeuvre technique
+- déploiement physique : capteur infrarouge et vidéo-projecteur
+- analyse vidéo : extraction d'objets pour le suivi de mouvements
+- expérience spectateur : rendu du texte et projection mapping
 
+.center[
+<img src='img_interlignes/vue_generale.png' width='80%' style='align:center'/>
+]
+--- 
 
 <!-- dispositif vidéo déployé dans un espace urbain -->
-
-
- 
 <!-- - caméra infrarouge  - vidéo-projecteur (5000 lumens) -->
 
 ---
 class:center, middle
-# Fonctionnement du dispositif vidéo
+
+# Déploiement du dispositif physique
 
 ---
-# Dispositif vidéo
+class: split-40 
+## Conditions pour jouer en public
+<img src='img_interlignes/schema_structure_1a.png' width='55%' style='position: absolute;right: 30px;  top: 200px; z-index:0'/>
+.column[
+conditions nocturnes
 
-<!-- <center>
-</center> -->
+zone de jeu rectangulaire
+- ~20 personnes peuvent interagir simultanément 
+- ~100 personnes peuvent circuler autour de la zone
 
-- capteur infrarouge placé en hauteur
-- algorithme d'analyse de mouvements
-- cheminements des passants associées à des zones de texte
-- projection mapping au sol avec un vidéo-projecteur
+dispositif placé en hauteur
+- H=8m => image = 12x8m
+]
 
-<img src='img_interlignes/vue_generale.png' width='50%' style='align:center'/>
---- 
-
-Dispositif physique reposant sur une structure
-- placement en hauteur (8m -> image : l=8m, L=12m)
-- angle de prise de vue et de projection en plongée
-- déport au dessus du public
-
+---
+<img src='img_interlignes/photo_structure.png' class="fullscreen-100"/>
 
 
 ---
-
-# Structure métalique autoportée (v1)
+## Structure métalique autoportée (v1)
 .column[
 <img src='img_interlignes/schema_structure_1ba.png' width='100%' style='position: absolute;left: 0px;  top: 150px; z-index:0'/>
 ]
 <div style='position: absolute;right: -110px;  bottom: 200px; z-index:0'>
 </div>
 .right[
-<br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br>
 - soudée sur mesure
-- poids = 30kg
-- lestage = 120kg
+- poids = 30kg, lestage = 120kg
 - temps de montage : 2h
-- homologuée par le bureau ICE
-
 ]
----
-<img src='img_interlignes/schema_structure_1a.png' class="fullscreen-100"/>
-
----
-<img src='img_interlignes/photo_structure.png' class="fullscreen-100"/>
 
 ---
 class: split-40
-## Simplification du dispositf de projection (v2)
+## Simplification du dispositf (v2)
 .column[
   <img src='img_interlignes/schema_structure_2.jpeg' width='100%'/>
 ]
@@ -176,9 +159,14 @@ class: split-40
 - amélioration de la sécurité
 - simplification du déploiement
 ]
----
 
-## Captation v1 : Kinect + Libfreenect2
+---
+class:center, middle
+
+# Dispositifs et outils de captation
+
+---
+### Captation v1 : Kinect + Libfreenect2
 - kernel density estimation : captation à 15m au lieu de 5m :)
 - détection simultanée et complémentaire des flux 3d et IR
 .center[
@@ -189,7 +177,7 @@ class: split-40
 limitations
 - bruit généré par le capteur
 - conditions atmosphériques (pluie)
-- USB : ralonge 5m max
+- USB3 : rallonge 5m max
 
 <!-- - résolution (640 x 480) -->
 <!-- <img src='img_interlignes/libfreenect2_kde.png' width='100%'/> -->
@@ -199,29 +187,30 @@ limitations
 ---
 class: split-40
 <!-- - caméra vidéosurveillance wifi : Rapberry-PI + module caméra infrarouge -->
-### Captation v2 : Rapberry caméra IR + projecteur IR
+### Captation v2 : Raspberry caméra IR + projecteur IR
 .column[
 <img src='img_interlignes/raspicam.png' width="130%"/>
 ]
 .column[
-  <br>
+  
 - image de meilleure qualité
-- éclairage avec plusieurs projecteurs IR
-- filtre lumière visible (< 780nm)
-    - flux parasites et texte projeté
-- hauteur plus importante (> 15m) 
-    - surface d'interaction étendue
-    - déport caméra facultatif
+- projection IR ciblée sur la scène
 - WiFi ou ethernet
+- filtre lumière visible : flux parasites et texte
+
+hauteur plus importante (> 15m) 
+- surface d'interaction étendue
+- déport caméra facultatif
 ]
 
 ---
 class:center, middle
-# Cartographier les trajectoires en temps réel 
-
+# Analyse vidéo en temps réél
+### détection du public
+### suivi des mouvements
 ---
 class: split-40
-# Détection et tracking du public
+# Détection et suivi du public : architecture
 .column[
 <img src='img_interlignes/cv_pipeline.png' width="70%"/>
 ]
@@ -233,7 +222,7 @@ prétraitements
 
 <br>
 
-tracking vidéo
+tracking d'objets multiples
   * analyse prédictive du déplacement
   * identification des objets 
 ]
@@ -274,7 +263,7 @@ name: preprocessing
 
 ## Détection de blobs
 - binarisation de l'image soustraite par amplification du contraste
-- recherche des contours des formes
+- recherche du contours des formes
 - fusion de blobs contigus avec filtres morphologiques : 
   - érosion des pixels isolés
   - dilatation des formes contigues
@@ -286,7 +275,7 @@ Comment analyser l'évolution de ces formes au cours du temps ?
 Comment determiner qu'une forme aun temps t=i est la même à t=i+1 ? -->
 
 ---
-## Tracking d'objets disincts en temps réél
+## Suivi de multiples objets en temps réél
 [Simple online and realtime tracking (Bewley et al., 2016)](http://arxiv.org/abs/1602.00763)
 
 Un objet détecté est associé à un état $x = [u, v, s, r, u', v', s']$
@@ -294,148 +283,131 @@ Un objet détecté est associé à un état $x = [u, v, s, r, u', v', s']$
   - $s$ et $r$ : aire et ratio de la BB
   - $u', v', s'$ prédictions de la position et aire suivante
 
-Filtre de Kalman : estimation de trajectoires candidates
-  - prédiction : estimation de l'état courant avec l'état estimé précédemment
-  - mise à jour : correction de l'état prédit avec observation courante
+Filtre de Kalman : prédiction et corrections de trajectoires
 
 Algorithme hongrois : couplage optimal entre prédictions et observations
 
-<!-- ---
-## Tracking dans des séries bruitées et incomplètes
+---
+class: split-40
+## Filtre de Kalman : estimation de trajectoires
+.column[
+  <img src='img_interlignes/kalman.png' width="90%"/>
+  ]
+.column[
+  <br><br>
+prédiction : estimation de l'état courant<br>avec l'état estimé précédemment
 
+correction : mise à jour de l'état prédit<br>avec observation courante
+]
+<br>
 
-- mise à jour de l'état courant avec
-  - objet nouvellement détecté si proche de la prédiction
-  - objet prédit si pas d'association satisfaisante (bruit) -->
-
-<!-- Faible coût calculatoire (25 FPS) vs algo deep learning (tiny yolo v3 : 2 FPS) -->
-
-<!-- - paramètres de vitesse résolus par le filtre de Kalman -->
-<!-- 
-- In assigning detections to existing targets, each target’s
-bounding box geometry is estimated by predicting its new
-location in the current frame.
-- The assignment cost matrix is
-then computed as the intersection-over-union (IOU) distance
- between each detection and all predicted bounding boxes
-from the existing targets
-- assignment is solved optimally
-using the Hungarian algorithm. 
-- Additionally, a minimum
-IOU is imposed to reject assignments where the detection to
-target overlap is less than IOUmin.
-- When objects enter and leave the image, unique identities
-need to be created or destroyed accordingly. 
-- For creating
-trackers, we consider any detection with an overlap less than
-IOUmin to signify the existence of an untracked object. 
-- The
-tracker is initialised using the geometry of the bounding box
-with the velocity set to zero. 
-- Since the velocity is unobserved
-- at this point the covariance of the velocity component is ini-ntitsed with large values, reflecting this uncertainty. 
-- Addi-tionally, the new tracker then undergoes a probationary period where the target needs to be associated with detections to
-accumulate enough evidence in order to prevent tracking of
-false positives.
-- Tracks are terminated if they are not detected for TLost
-frames. 
-
-
-Lien vidéo YouTube ?
-- 10x plus rapide que les autres algos de tracking (250hz) -->
-
-
-
-<!-- - si erreur de détection, 
-- librairie FilterPy -->
-<!-- ### Algorithme des K plus proches voisins 
-- ré-identifier les corps qui ont disparu du champ de la caméra
-
-Un algorithme de machine learning analyse chaque corps en mouvement pour identifier une trajectoire qui deviendra une zone d’apparition du texte. -->
+---
+name: tracking
+<img src="http://localhost:8888/video_feed" id="kinect" height="100%" class="fullscreen-100">
 
 
 ---
-class: center, middle
-# Interaction avec le public
-
----
-# Conditions pour jouer en public
-- faible luminosité (nuit ou pénombre) pour rendre le texte lisible
-- espace au sol limité par une zone rectangulaire (12m x 8m minimum)
-- une vingtaine de personnes peuvent interagir simultanément 
-- une centaine peuvent circuler autour de la zone
-
----
-### Contrôle de l'application
-Paramètres liés à la captation
+### Contrôle des paramètres liés à la captation
 .column[
 <img src='/img_interlignes/telecommande_image.png' width='70%'/>
 ]
 .column[
+  <br>
+prétraitements de l'image
 - contraste, luminosité caméra
-- choix algo de détection (BG substraction)
-- morphologie
-- nombre limite de blobs pour faire apparaitre/disparaitre une trajectoire
+- choix algo BG substraction
+- filtres morphologiques
+
+sensibilité du tracking
+- tolérence aux détections manquantes
 - distance max entre blob candidat et prédiction
 ]
+---
+class: center, middle
+# Expérience spectateur
+### rendu du texte et projection mapping
+
 
 ---
-### Contrôle de l'application
-Paramètres typographiques
+## Génération du texte dans une application Web
+- corpus découpé en énoncés
+- chaque marcheur "consomme" le texte au fur et à mesure
+- interludes vidéo projetées entres les chapitres
+
+
+- trajectoires transmises via websockets
+- rendu du texte dans un canvas HTML : <a href="https://github.com/tholman/texter">texter (Tim Holman, 2013)</a>
+
+<svg width="100%" height="60%" viewBox="0 0 1400 400" version="1.1"
+     xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <path id="MyPath"
+          d="M 0 20 
+             C 200 100 300   0 400 100
+             C 500 200 600 300 700 200
+             C 800 100 900 100 900 100
+             C 900 100 1000 100 1350 20" />
+  </defs>
+  <use xlink:href="#MyPath" fill="none" stroke="red" stroke-width='5px' />
+  <text font-size="45" fill="white" >
+    <textPath xlink:href="#MyPath" startOffset="0%">
+  orientation et taille du texte adaptée à la trajectoire et 
+      <tspan font-size="70">l'acc</tspan><tspan font-size="90">éléra</tspan><tspan font-size="120">tion</tspan>
+    </textPath>
+  </text>
+
+  <!-- Show outline of canvas using 'rect' element -->
+</svg>
+
+---
+### Contrôle des paramètres typographiques
 .column[
 <img src='img_interlignes/telecommande_text.png' width='70%'/>
 ]
 .column[
+  <br>
 - taille (min/max) du texte
 - influence vélocité
 - espacement entre mots et lettres (kerning)
 - insertion de ponctuation pour limiter la taille du texte
-- déclanchement d'interludes video
+- déclenchement d'interludes video
 ]
 
-
 ---
-# Génération du texte
-Application Web
-- trajectoires transmises via websockets
-- corpus découpé en énoncés
-- chaque marcheur "consomme" le texte au fur et à mesure
-- taille du texte est fonction de l accélération
-- orientation du texte adapté a la trajectoire
-- interludes vidéo projetées entres les chapitres
+### Projection mapping : adaptation de l'image à l'espace physique
+Outil de mise en correspondance entre projection et captation
+.center[
+<img src='img_interlignes/module_mapping.png' width='70%'/>
+]
+- canvas sur un quad 3d dont on peut changer la forme
+- synchronisation des coordonnées source/cible à travers le LocalStorage
 
-<!-- HTML, CSS, JS
-- tracés typographiques : canvas avec javascript  
-- communication websockets (coordonnées de déplacement)
-- module de mapping en CSS --> 
-
+<!-- Comment le texte aparaît-il sous les pas des marcheurs ? -->
 ---
-# Projection mapping
-Comment le texte aparaît-il sous les pas des marcheurs ?
-
-Outil de pour faire correspondre projection et captation
-  - propriétés CSS pour inscrire un canvas sur un quad 3d dont on peut changer la forme
-  - synchronisation des coordonnées source/cible a travers le localstorage du navigateur
-
----
+class: center, middle
 # Conclusion et perspectives
-
-- Interlignes invite à découvrir la lecture d'un texte dans l'espace public
-  - partage d'une experience sensible
-- mise en lumière d'un texte de Georges Perec
+---
+<!-- - mise en lumière d'un texte de Georges Perec
   - sigularité des situations infra-ordinaires
-  - auto-référence : lire dans la rue un texte qui parle de la rue
+  - auto-référence : lire dans la rue un texte qui parle de la rue -->
+
+## Interlignes : la lecture comme expérience sociale
+
+partager la lecture d'un texte dans l'espace public
+- la marche est une écriture
+
+le texte libéré de sa page
+- mise en mots de l'environement
+- mise en espace des mots que porte l'environement
+
 
 ---
-Réalisation technique
-- version initiale réalisée en 3 semaines
-- detourne des techniques de vidéo-surveillance : 
+## Interlignes : soudure et machine learning
+- dispositif physique : capteurs et projecteurs dans l'espace public
+- couplage de techniques de réalité augmentée et de vidéo-surveillance 
   - captation, détection et tracking de foule dans l'espace public
-- techniques issues du web au service d'une "expérience spectateur"
+- développement Web au service de l' "expérience spectateur"
 
----
-class:center, middle
-## Travaux en cours et perspectives
 ---
 ## написанное между строк
 Prochain temps fort : Saint-Petersbourg, septembre 2019
@@ -452,7 +424,7 @@ Prochain temps fort : Saint-Petersbourg, septembre 2019
 
 ---
 ### Amélioration de la captation
-- optimiser l'utilisation de projecteurs infrarouge
+- optimiser l'utilisation de projecteurs infrarouges
 - amélioration du filtrage de la lumière visible
 - mutli-caméras et multi-projecteurs :
   - déploiement du dispositif sur toute une rue
@@ -515,3 +487,60 @@ Front-end :  -->
 
 <!-- 
 Cette détection identifie chaque corps comme une zone d’apparition du texte dont l’orientation s’adapte dynamiquement aux trajectoires. Les textes parcourus seront alors projetés directement sur le sol où les spectateurs pourront voir les mots apparaître et disparaître sous leurs pas. -->
+
+
+<!-- 
+Cycle [prédire, mesurer, corriger]
+estime l'état à chaque étape
+## Tracking dans des séries bruitées et incomplètes
+
+- objet nouvellement détecté si proche de la prédiction
+- objet prédit si pas d'association satisfaisante (bruit) 
+
+- mise à jour de l'état courant avec
+  - -->
+
+<!-- Faible coût calculatoire (25 FPS) vs algo deep learning (tiny yolo v3 : 2 FPS) -->
+
+<!-- - paramètres de vitesse résolus par le filtre de Kalman -->
+<!-- 
+- In assigning detections to existing targets, each target’s
+bounding box geometry is estimated by predicting its new
+location in the current frame.
+- The assignment cost matrix is
+then computed as the intersection-over-union (IOU) distance
+ between each detection and all predicted bounding boxes
+from the existing targets
+- assignment is solved optimally
+using the Hungarian algorithm. 
+- Additionally, a minimum
+IOU is imposed to reject assignments where the detection to
+target overlap is less than IOUmin.
+- When objects enter and leave the image, unique identities
+need to be created or destroyed accordingly. 
+- For creating
+trackers, we consider any detection with an overlap less than
+IOUmin to signify the existence of an untracked object. 
+- The
+tracker is initialised using the geometry of the bounding box
+with the velocity set to zero. 
+- Since the velocity is unobserved
+- at this point the covariance of the velocity component is ini-ntitsed with large values, reflecting this uncertainty. 
+- Addi-tionally, the new tracker then undergoes a probationary period where the target needs to be associated with detections to
+accumulate enough evidence in order to prevent tracking of
+false positives.
+- Tracks are terminated if they are not detected for TLost
+frames. 
+
+
+Lien vidéo YouTube ?
+- 10x plus rapide que les autres algos de tracking (250hz) -->
+
+
+
+<!-- - si erreur de détection, 
+- librairie FilterPy -->
+<!-- ### Algorithme des K plus proches voisins 
+- ré-identifier les corps qui ont disparu du champ de la caméra
+
+Un algorithme de machine learning analyse chaque corps en mouvement pour identifier une trajectoire qui deviendra une zone d’apparition du texte. -->
