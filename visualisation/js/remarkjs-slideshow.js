@@ -33,8 +33,10 @@ slideshow = remark.create({
 slideshow.on('showSlide', function (slide) {
   console.log(slide);
   if (slide.properties.name == 'preprocessing') {
-    set_param("display_mode", 0);
-
+    set_param("display_mode", 1);
+  }
+  if (slide.properties.name == 'tracking') {
+    set_param("display_mode", 2);
   }
   // Slide is the slide being navigated to
 });
